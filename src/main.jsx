@@ -1,9 +1,11 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { RouterProvider } from "react-router-dom";
+import router from "./routes/router.jsx";
 import "./index.css";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <h1 className="text-3xl font-bold text-red-500">Welcome to React </h1>
+    <RouterProvider router={router} />
   </StrictMode>,
 );
