@@ -1,8 +1,12 @@
 import { createBrowserRouter } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout.jsx";
+import AuthLayout from "../layouts/AuthLayout.jsx";
 import HomePage from "../pages/HomePage.jsx";
+import FindServicePage from "../pages/FindServicePage.jsx";
+import FindJobsPage from "../pages/FindJobsPage.jsx";
 import NotFoundPage from "../pages/NotFoundPage.jsx";
 import SectionPage from "../pages/SectionPage.jsx";
+import AuthPage from "../pages/AuthPage.jsx";
 
 const router = createBrowserRouter([
   {
@@ -16,21 +20,11 @@ const router = createBrowserRouter([
       },
       {
         path: "services",
-        element: (
-          <SectionPage
-            title="Find Services"
-            description="Browse verified Service Providers and choose the right expert for the job."
-          />
-        ),
+        element: <FindServicePage />,
       },
       {
         path: "jobs",
-        element: (
-          <SectionPage
-            title="Find Jobs"
-            description="Explore open jobs posted by verified Hirers across different service categories."
-          />
-        ),
+        element: <FindJobsPage />,
       },
       {
         path: "how-it-works",
@@ -47,15 +41,6 @@ const router = createBrowserRouter([
           <SectionPage
             title="About Nirbhor"
             description="Learn how Nirbhor is built to support trust, verification, and professional service hiring."
-          />
-        ),
-      },
-      {
-        path: "contact",
-        element: (
-          <SectionPage
-            title="Contact"
-            description="Get in touch with the Nirbhor team for support, questions, or platform feedback."
           />
         ),
       },
@@ -88,6 +73,22 @@ const router = createBrowserRouter([
       },
     ],
   },
+
+  // Auth routes — separate layout (no Header/Footer)
+  {
+    element: <AuthLayout />,
+    children: [
+      {
+        path: "login",
+        element: <AuthPage />,
+      },
+      {
+        path: "register",
+        element: <AuthPage />,
+      },
+    ],
+  },
+
   {
     path: "*",
     element: <NotFoundPage />,

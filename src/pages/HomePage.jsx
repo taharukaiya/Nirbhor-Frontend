@@ -1,509 +1,301 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import {
+  ArrowRight,
+  CreditCard,
+  MessageCircle,
+  ShieldCheck,
+} from "../components/ui/Icons.jsx";
+import { useRemoteList } from "../hooks/useRemoteList.js";
+import { getServices } from "../services/api.js";
 import electricianImage from "../assets/worker-slider/electrician.jpg";
-import driverImage from "../assets/worker-slider/driver.avif";
-import maidImage from "../assets/worker-slider/maid.jpg";
 import plumberImage from "../assets/worker-slider/plumber.jpg";
+import driverImage from "../assets/worker-slider/driver.avif";
 
-const heroSlides = [
+const slides = [
   {
-    eyebrow: "Verified marketplace",
-    title: "Find trusted people for the work that matters.",
-    description:
-      "Hire verified Service Providers or post a job as a verified Hirer. Every conversation stays job-specific, every payment stays protected.",
-    primaryCta: "Find a Service",
-    primaryTo: "/services",
-    secondaryCta: "Find Jobs",
-    secondaryTo: "/jobs",
-    metricLabel: "Verified users",
-    metricValue: "100%",
+    tag: "For every home",
+    title: "Find skilled help without the guesswork.",
+    copy: "Discover verified professionals for repairs, care, transport, and everyday work.",
     image: electricianImage,
+    to: "/services",
+    action: "Browse services",
   },
   {
-    eyebrow: "Popular service",
-    title: "Electricians ready for fast, safe, and reliable work.",
-    description:
-      "Browse trusted electricians for wiring, installations, maintenance, and repairs with proposal-based hiring.",
-    primaryCta: "Explore Electricians",
-    primaryTo: "/services",
-    secondaryCta: "Post a Job",
-    secondaryTo: "/jobs/create",
-    metricLabel: "Average rating",
-    metricValue: "4.9",
+    tag: "For trusted professionals",
+    title: "Turn your expertise into your next opportunity.",
+    copy: "Build a credible profile, respond to real jobs, and grow through work done well.",
     image: plumberImage,
+    to: "/jobs",
+    action: "Find jobs",
   },
   {
-    eyebrow: "Fast home help",
-    title: "Plumbers for urgent fixes and planned installations.",
-    description:
-      "Connect with plumbers for leak repairs, fittings, kitchen work, and complete bathroom solutions.",
-    primaryCta: "Browse Plumbers",
-    primaryTo: "/services",
-    secondaryCta: "How It Works",
-    secondaryTo: "/how-it-works",
-    metricLabel: "Completed jobs",
-    metricValue: "5k+",
-    image: maidImage,
-  },
-  {
-    eyebrow: "Reliable support",
-    title: "Cleaners and drivers for everyday convenience.",
-    description:
-      "Find dependable help for homes, offices, and transportation with a professional marketplace experience.",
-    primaryCta: "Explore Services",
-    primaryTo: "/services",
-    secondaryCta: "Get Started",
-    secondaryTo: "/register",
-    metricLabel: "Trust score",
-    metricValue: "98%",
+    tag: "Built for confidence",
+    title: "Every job starts with a clearer conversation.",
+    copy: "Compare proposals, keep communication job-specific, and move forward with confidence.",
     image: driverImage,
+    to: "/how-it-works",
+    action: "See how it works",
   },
 ];
 
-const trustIndicators = [
-  ["Verified Users", "Identity checked with NID"],
-  ["Secure Payments", "SSLCommerz sandbox ready"],
-  ["Secure Job Chat", "Job-based communication only"],
-  ["Trusted Reviews", "Independent role ratings"],
+const trustItems = [
+  [
+    ShieldCheck,
+    "Identity checked",
+    "Profiles built around verification and accountability.",
+  ],
+  [
+    MessageCircle,
+    "Focused conversations",
+    "Keep every question and decision tied to the job.",
+  ],
+  [
+    CreditCard,
+    "Protected payments",
+    "A clearer payment flow from agreement to completion.",
+  ],
 ];
 
-const popularServices = [
-  ["Electrician", "Fast help for wiring, repair, and installations."],
-  ["Plumber", "Leak fixes, fittings, and emergency plumbing support."],
-  ["Cleaner", "Reliable home and office cleaning services."],
-  ["Driver", "Verified drivers for personal or business needs."],
-  ["Carpenter", "Furniture, repair, and custom woodwork support."],
-  ["Mechanic", "Maintenance and repair for vehicles and machines."],
-];
-
-const workSteps = [
-  ["01", "Verify", "Create a trusted account with NID verification."],
-  ["02", "Post / Find", "Publish jobs or browse services and providers."],
-  ["03", "Connect", "Use job-specific chat to compare proposals safely."],
-  ["04", "Complete", "Pay securely, finish the work, and leave reviews."],
-];
-
-const featuredProviders = [
-  ["Rahim Uddin", "Electrician", "Dhaka", "4.9", "120"],
-  ["Karim Hasan", "Plumber", "Chattogram", "4.8", "98"],
-  ["Sadia Akter", "Cleaner", "Dhaka", "4.9", "76"],
+const steps = [
+  [
+    "01",
+    "Create your profile",
+    "Tell the marketplace what you need or what you do best.",
+  ],
+  [
+    "02",
+    "Find your match",
+    "Search live services or explore jobs that fit your skills.",
+  ],
+  [
+    "03",
+    "Work with clarity",
+    "Agree on scope, communicate securely, and finish with confidence.",
+  ],
 ];
 
 function HomePage() {
+  const { data: providers, loading } = useRemoteList(getServices);
   const [activeSlide, setActiveSlide] = useState(0);
-  const carouselRef = useRef(null);
-  const slideRefs = useRef([]);
+  const sliderRef = useRef(null);
 
   useEffect(() => {
-    const carouselElement = carouselRef.current;
-
-    if (!carouselElement) {
-      return undefined;
-    }
-
-    let animationFrameId = 0;
-
-    const handleScroll = () => {
-      window.cancelAnimationFrame(animationFrameId);
-
-      animationFrameId = window.requestAnimationFrame(() => {
-        const slideWidth = carouselElement.clientWidth;
-
-        if (!slideWidth) {
-          return;
-        }
-
-        const nextIndex = Math.round(carouselElement.scrollLeft / slideWidth);
-
-        setActiveSlide(Math.max(0, Math.min(heroSlides.length - 1, nextIndex)));
-      });
-    };
-
-    carouselElement.addEventListener("scroll", handleScroll, { passive: true });
-
-    return () => {
-      window.cancelAnimationFrame(animationFrameId);
-      carouselElement.removeEventListener("scroll", handleScroll);
-    };
+    const timer = window.setInterval(
+      () => setActiveSlide((current) => (current + 1) % slides.length),
+      6000,
+    );
+    return () => window.clearInterval(timer);
   }, []);
 
-  const scrollToSlide = (slideIndex) => {
-    slideRefs.current[slideIndex]?.scrollIntoView({
-      behavior: "smooth",
-      inline: "start",
-      block: "nearest",
-    });
-  };
-
-  const previousSlide = () => {
-    const nextIndex = (activeSlide - 1 + heroSlides.length) % heroSlides.length;
-    scrollToSlide(nextIndex);
-  };
-
-  const nextSlide = () => {
-    const nextIndex = (activeSlide + 1) % heroSlides.length;
-    scrollToSlide(nextIndex);
-  };
+  useEffect(() => {
+    const slider = sliderRef.current;
+    if (slider)
+      slider.scrollTo({
+        left: slider.clientWidth * activeSlide,
+        behavior: "smooth",
+      });
+  }, [activeSlide]);
 
   return (
-    <div className="pb-12">
-      <section className="relative overflow-hidden bg-[#011F50] text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.16),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(0,102,255,0.2),_transparent_30%)]" />
-        <div className="absolute -left-24 top-16 h-72 w-72 rounded-full bg-[#0066FF]/20 blur-3xl" />
-        <div className="absolute -bottom-24 right-0 h-80 w-80 rounded-full bg-[#00C853]/10 blur-3xl" />
-
-        <div className="relative mx-auto w-11/12 py-8 lg:w-10/12 lg:py-12">
-          <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-2xl space-y-4">
-              <span className="inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-semibold text-white/90 backdrop-blur">
-                Verified marketplace for trusted services
+    <div className="min-w-0 overflow-hidden bg-[#f7f9fc] pb-20 text-[#10213f]">
+      <section className="relative overflow-hidden bg-[#071f49] text-white">
+        <div className="pointer-events-none absolute -right-32 top-8 h-96 w-96 rounded-full bg-[#2e7df6]/20 blur-3xl" />
+        <div className="relative mx-auto w-full max-w-7xl px-5 pb-10 pt-16 sm:px-8 lg:px-12 lg:pb-16 lg:pt-24">
+          <div className="grid items-end gap-10 lg:grid-cols-[1fr_auto]">
+            <div className="max-w-3xl">
+              <span className="inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white/80">
+                Nirbhor marketplace
               </span>
-              <h1 className="text-4xl font-bold leading-tight md:text-5xl xl:text-6xl">
-                A cleaner, safer way to hire and work.
+              <h1 className="mt-6 max-w-3xl text-4xl font-bold leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl">
+                Good work starts with trust.
               </h1>
-              <p className="max-w-xl text-base leading-7 text-white/75 md:text-lg">
-                Nirbhor connects verified Hirers and verified Service Providers
-                through secure jobs, proposal-based hiring, job-specific chat,
-                and protected payments.
+              <p className="mt-6 max-w-2xl text-base leading-7 text-white/70 sm:text-lg">
+                A dependable place to hire verified service providers, find
+                meaningful jobs, and keep every step clear.
               </p>
-            </div>
-
-            <div className="grid gap-3 rounded-3xl border border-white/10 bg-white/10 p-4 backdrop-blur sm:grid-cols-3 lg:min-w-[30rem]">
-              {[
-                ["NID", "Verified"],
-                ["Chat", "Job-based"],
-                ["Pay", "Escrowed"],
-              ].map(([label, value]) => (
-                <article
-                  key={label}
-                  className="rounded-2xl bg-white/10 px-4 py-3 text-center"
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <Link
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2e7df6] px-6 py-3.5 text-sm font-bold transition hover:bg-white hover:text-[#071f49]"
+                  to="/services"
                 >
-                  <div className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">
+                  Find a service <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  className="inline-flex items-center justify-center rounded-xl border border-white/20 px-6 py-3.5 text-sm font-bold text-white transition hover:bg-white hover:text-[#071f49]"
+                  to="/jobs"
+                >
+                  Explore jobs
+                </Link>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+              {[
+                ["01", "Verified"],
+                ["02", "Clear"],
+                ["03", "Protected"],
+              ].map(([number, label]) => (
+                <div
+                  key={number}
+                  className="rounded-2xl border border-white/10 bg-white/10 px-3 py-4 text-center backdrop-blur sm:px-5"
+                >
+                  <span className="text-xs font-bold text-[#8eb7ff]">
+                    {number}
+                  </span>
+                  <p className="mt-2 text-xs font-semibold sm:text-sm">
                     {label}
-                  </div>
-                  <div className="mt-1 text-lg font-bold text-white">
-                    {value}
-                  </div>
-                </article>
+                  </p>
+                </div>
               ))}
             </div>
           </div>
-
-          <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 shadow-2xl backdrop-blur">
+          <div className="mt-14 min-w-0 overflow-hidden rounded-[2rem] border border-white/15 bg-white/5 shadow-2xl">
             <div
-              ref={carouselRef}
-              className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              ref={sliderRef}
+              className="flex min-w-0 snap-x snap-mandatory overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
-              {heroSlides.map((slide, slideIndex) => (
+              {slides.map((slide) => (
                 <article
                   key={slide.title}
-                  ref={(element) => {
-                    slideRefs.current[slideIndex] = element;
-                  }}
-                  className="relative min-h-[540px] w-full flex-none snap-center overflow-hidden sm:min-h-[620px]"
+                  className="relative min-w-0 basis-full flex-none snap-start overflow-hidden"
                 >
-                  <img
-                    alt={slide.title}
-                    className="absolute inset-0 h-full w-full object-cover"
-                    src={slide.image}
-                  />
-                  <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(1,31,80,0.08)_0%,rgba(1,31,80,0.5)_40%,rgba(1,31,80,0.92)_100%)]" />
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.18),_transparent_28%)]" />
-
-                  <div className="relative flex h-full min-h-[540px] flex-col justify-end p-6 sm:p-8 lg:min-h-[620px] lg:p-12">
-                    <div className="max-w-2xl space-y-5">
-                      <span className="inline-flex rounded-full bg-white/15 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-white/90 backdrop-blur">
-                        {slide.eyebrow}
+                  <div className="grid min-h-[25rem] lg:min-h-[30rem] lg:grid-cols-[1.1fr_0.9fr]">
+                    <div className="relative order-2 min-h-64 lg:order-1">
+                      <img
+                        className="absolute inset-0 h-full w-full object-cover"
+                        src={slide.image}
+                        alt=""
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-r from-[#071f49]/50 to-transparent" />
+                    </div>
+                    <div className="order-1 flex flex-col justify-center p-7 sm:p-12 lg:order-2 lg:p-16">
+                      <span className="text-xs font-bold uppercase tracking-[0.18em] text-[#8eb7ff]">
+                        {slide.tag}
                       </span>
-                      <div className="space-y-4">
-                        <h2 className="max-w-2xl text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl">
-                          {slide.title}
-                        </h2>
-                        <p className="max-w-xl text-sm leading-7 text-white/80 sm:text-base lg:text-lg">
-                          {slide.description}
-                        </p>
-                      </div>
-
-                      <div className="flex flex-col gap-3 sm:flex-row">
-                        <Link
-                          className="rounded-full bg-[#0066FF] px-6 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-white hover:text-[#011F50]"
-                          to={slide.primaryTo}
-                        >
-                          {slide.primaryCta}
-                        </Link>
-                        <Link
-                          className="rounded-full border border-white/30 px-6 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-white hover:text-[#011F50]"
-                          to={slide.secondaryTo}
-                        >
-                          {slide.secondaryCta}
-                        </Link>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-3 pt-2 text-sm text-white/80">
-                        <span className="rounded-full border border-white/15 bg-white/10 px-4 py-2">
-                          {slide.metricLabel}: {slide.metricValue}
-                        </span>
-                        <span className="rounded-full border border-white/15 bg-white/10 px-4 py-2">
-                          Secure job chat
-                        </span>
-                        <span className="rounded-full border border-white/15 bg-white/10 px-4 py-2">
-                          5% commission model
-                        </span>
-                      </div>
+                      <h2 className="mt-4 max-w-xl text-3xl font-bold leading-tight sm:text-4xl">
+                        {slide.title}
+                      </h2>
+                      <p className="mt-4 max-w-lg leading-7 text-white/65">
+                        {slide.copy}
+                      </p>
+                      <Link
+                        className="mt-7 inline-flex w-fit items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-[#071f49] transition hover:bg-[#8ee0ba]"
+                        to={slide.to}
+                      >
+                        {slide.action} <ArrowRight className="h-4 w-4" />
+                      </Link>
                     </div>
                   </div>
                 </article>
               ))}
             </div>
-
-            <div className="flex flex-col gap-4 border-t border-white/10 bg-[#011F50]/90 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-              <div className="flex items-center gap-2">
-                {heroSlides.map((slide, slideIndex) => (
+            <div className="flex items-center justify-between border-t border-white/10 px-6 py-4">
+              <div className="flex gap-2">
+                {slides.map((slide, index) => (
                   <button
                     key={slide.title}
-                    className={`h-2.5 rounded-full transition-all duration-200 ${
-                      slideIndex === activeSlide
-                        ? "w-10 bg-white"
-                        : "w-2.5 bg-white/35"
-                    }`}
                     type="button"
-                    onClick={() => scrollToSlide(slideIndex)}
-                    aria-label={`View ${slide.title}`}
+                    aria-label={`Show slide ${index + 1}`}
+                    aria-pressed={activeSlide === index}
+                    onClick={() => setActiveSlide(index)}
+                    className={`h-2 rounded-full transition-all ${activeSlide === index ? "w-8 bg-[#8ee0ba]" : "w-2 bg-white/30"}`}
                   />
                 ))}
               </div>
-
-              <div className="flex items-center gap-3">
-                <button
-                  className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-[#011F50]"
-                  type="button"
-                  onClick={previousSlide}
-                >
-                  Prev
-                </button>
-                <button
-                  className="rounded-full border border-white/20 bg-white px-4 py-2 text-sm font-semibold text-[#011F50] transition-colors hover:bg-[#00C853] hover:text-white"
-                  type="button"
-                  onClick={nextSlide}
-                >
-                  Next
-                </button>
-              </div>
+              <span className="text-xs font-semibold text-white/50">
+                Swipe to explore
+              </span>
             </div>
           </div>
         </div>
       </section>
-
-      <section className="mx-auto mt-10 w-11/12 rounded-[2rem] bg-white px-6 py-8 shadow-sm ring-1 ring-slate-200 lg:w-10/12 lg:px-10 lg:py-10">
-        <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
-          <div className="space-y-4">
-            <span className="inline-flex rounded-full bg-[#0066FF]/10 px-4 py-2 text-sm font-semibold text-[#0066FF]">
-              Smart search
-            </span>
-            <h2 className="text-3xl font-bold text-[#011F50]">
-              Search services in a cleaner, faster way.
-            </h2>
-            <p className="max-w-xl text-slate-600">
-              Use service, location, and budget filters to find the right
-              verified provider without noise.
-            </p>
-          </div>
-
-          <div className="grid gap-3 rounded-[1.5rem] bg-slate-50 p-4 sm:grid-cols-[1.2fr_0.8fr_0.55fr]">
-            <label className="block">
-              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                What service do you need?
-              </span>
-              <input
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition-colors placeholder:text-slate-400 focus:border-[#0066FF]"
-                placeholder="Search for a service"
-                type="text"
-              />
-            </label>
-            <label className="block">
-              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                Location
-              </span>
-              <input
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition-colors placeholder:text-slate-400 focus:border-[#0066FF]"
-                placeholder="Dhaka"
-                type="text"
-              />
-            </label>
-            <Link
-              className="flex items-center justify-center rounded-2xl bg-[#0066FF] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#011F50]"
-              to="/services"
-            >
-              Search
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto mt-10 w-11/12 grid gap-4 sm:grid-cols-2 xl:grid-cols-4 lg:w-10/12">
-        {trustIndicators.map(([title, description]) => (
+      <section className="mx-auto grid w-full max-w-7xl gap-4 px-5 pt-8 sm:grid-cols-3 sm:px-8 lg:px-12">
+        {trustItems.map(([Icon, title, copy]) => (
           <article
             key={title}
-            className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-md"
+            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
           >
-            <h3 className="text-base font-semibold text-[#011F50]">{title}</h3>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              {description}
-            </p>
+            <Icon className="h-5 w-5 text-[#2e7df6]" />
+            <h2 className="mt-4 font-bold text-[#071f49]">{title}</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-500">{copy}</p>
           </article>
         ))}
       </section>
-
-      <section className="mx-auto mt-10 w-11/12 rounded-[2rem] bg-[#011F50] px-6 py-8 text-white lg:w-10/12 lg:px-10">
-        <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
-          <div className="space-y-4">
-            <span className="inline-flex rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white/85">
-              Popular services
-            </span>
-            <h2 className="text-3xl font-bold">
-              Find the right service quickly.
-            </h2>
-            <p className="max-w-lg text-white/75">
-              Browse the most requested service categories and connect with the
-              right verified provider for your need.
-            </p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {popularServices.map(([title, description]) => (
-              <article
-                key={title}
-                className="rounded-2xl border border-white/10 bg-white/5 p-4 transition-transform duration-200 hover:-translate-y-1"
-              >
-                <h3 className="text-base font-semibold">{title}</h3>
-                <p className="mt-1 text-sm leading-6 text-white/75">
-                  {description}
-                </p>
-                <Link
-                  className="mt-4 inline-flex text-sm font-semibold text-[#00C853] transition-colors hover:text-white"
-                  to="/services"
-                >
-                  View service
-                </Link>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto mt-10 w-11/12 rounded-[2rem] bg-white px-6 py-8 shadow-sm ring-1 ring-slate-200 lg:w-10/12 lg:px-10 lg:py-10">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <span className="inline-flex rounded-full bg-[#0066FF]/10 px-4 py-2 text-sm font-semibold text-[#0066FF]">
-              How Nirbhor Works
-            </span>
-            <h2 className="mt-4 text-3xl font-bold text-[#011F50]">
-              A simple, trust-first workflow.
-            </h2>
-          </div>
+      <section className="mx-auto grid w-full max-w-7xl gap-12 px-5 py-20 sm:px-8 lg:grid-cols-[0.8fr_1.2fr] lg:px-12">
+        <div>
+          <span className="text-xs font-bold uppercase tracking-[0.18em] text-[#2e7df6]">
+            Simple by design
+          </span>
+          <h2 className="mt-4 text-3xl font-bold tracking-tight text-[#071f49] sm:text-5xl">
+            From first search to finished work.
+          </h2>
+          <p className="mt-5 max-w-md leading-7 text-slate-500">
+            Nirbhor gives both sides the structure to make better decisions and
+            build a record of good work.
+          </p>
           <Link
-            className="text-sm font-semibold text-[#0066FF] transition-colors hover:text-[#011F50]"
+            className="mt-7 inline-flex items-center gap-2 font-bold text-[#2e7df6]"
             to="/how-it-works"
           >
-            Learn more
+            Learn the process <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
-
-        <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {workSteps.map(([stepNumber, title, description]) => (
+        <div className="grid gap-4">
+          {steps.map(([number, title, copy]) => (
             <article
-              key={stepNumber}
-              className="rounded-3xl border border-slate-200 bg-slate-50 p-5 transition-shadow duration-200 hover:shadow-md"
+              key={number}
+              className="flex gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
             >
-              <span className="text-sm font-semibold tracking-[0.2em] text-[#00C853]">
-                {stepNumber}
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#e9f1ff] text-sm font-bold text-[#2e7df6]">
+                {number}
               </span>
-              <h3 className="mt-3 text-xl font-semibold text-[#011F50]">
-                {title}
-              </h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                {description}
-              </p>
+              <div>
+                <h3 className="font-bold text-[#071f49]">{title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-500">{copy}</p>
+              </div>
             </article>
           ))}
         </div>
       </section>
-
-      <section className="mx-auto mt-10 w-11/12 grid gap-6 rounded-[2rem] bg-slate-50 px-6 py-8 lg:w-10/12 lg:grid-cols-[1.05fr_0.95fr] lg:px-10">
-        <div>
-          <span className="inline-flex rounded-full bg-[#00C853]/10 px-4 py-2 text-sm font-semibold text-[#00C853]">
-            Featured providers
-          </span>
-          <h2 className="mt-4 text-3xl font-bold text-[#011F50]">
-            Meet top verified professionals.
-          </h2>
-          <p className="mt-3 max-w-xl text-slate-600">
-            Highlight trusted providers with strong ratings, completed jobs, and
-            NID verification badges.
-          </p>
-        </div>
-
-        <div className="grid gap-4">
-          {featuredProviders.map(
-            ([name, category, location, rating, completedJobs]) => (
-              <article
-                key={name}
-                className="flex items-center justify-between rounded-3xl border border-slate-200 bg-white p-4 shadow-sm transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-md"
-              >
-                <div>
-                  <h3 className="text-lg font-semibold text-[#011F50]">
-                    {name}
-                  </h3>
-                  <p className="text-sm text-slate-600">
-                    {category} · {location}
-                  </p>
-                  <p className="mt-2 text-sm text-slate-500">
-                    {completedJobs} completed jobs
-                  </p>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm font-semibold text-[#00C853]">
-                    NID Verified
-                  </div>
-                  <div className="mt-1 text-lg font-bold text-[#0066FF]">
-                    {rating} ★
-                  </div>
-                </div>
-              </article>
-            ),
-          )}
-        </div>
-      </section>
-
-      <section className="mx-auto mt-10 w-11/12 rounded-[2rem] bg-[#011F50] px-6 py-10 text-white lg:w-10/12 lg:px-10">
-        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-          <div className="space-y-4">
-            <span className="inline-flex rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white/85">
-              Ready to get started?
+      <section className="mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-12">
+        <div className="rounded-[2rem] bg-[#eaf7f0] p-7 sm:p-10 lg:flex lg:items-center lg:justify-between lg:p-14">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-[0.18em] text-[#138a59]">
+              Live marketplace
             </span>
-            <h2 className="text-3xl font-bold md:text-4xl">
-              Post a job or start offering services today.
+            <h2 className="mt-4 text-3xl font-bold text-[#071f49]">
+              Meet the professionals behind the work.
             </h2>
-            <p className="max-w-xl text-white/75">
-              Join a marketplace built around trust, verification, and secure
-              work flow.
+            <p className="mt-3 text-slate-600">
+              {loading
+                ? "Loading verified profiles..."
+                : `${providers.length} verified profiles available through the marketplace.`}
             </p>
           </div>
-
-          <div className="flex flex-col gap-3 sm:flex-row lg:justify-end">
-            <Link
-              className="rounded-full bg-white px-6 py-3 text-center text-sm font-semibold text-[#011F50] transition-colors hover:bg-slate-100"
-              to="/services"
-            >
-              Find a Service
-            </Link>
-            <Link
-              className="rounded-full border border-white/30 px-6 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-white hover:text-[#011F50]"
-              to="/register"
-            >
-              Become a Service Provider
-            </Link>
+          <Link
+            className="mt-7 inline-flex items-center gap-2 rounded-xl bg-[#071f49] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#2e7df6] lg:mt-0"
+            to="/services"
+          >
+            View providers <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </section>
+      <section className="mx-auto mt-20 w-full max-w-7xl px-5 sm:px-8 lg:px-12">
+        <div className="rounded-[2rem] bg-[#071f49] px-7 py-12 text-white sm:px-12 lg:flex lg:items-center lg:justify-between">
+          <div>
+            <p className="text-sm font-bold text-[#8ee0ba]">
+              Ready when you are
+            </p>
+            <h2 className="mt-3 max-w-xl text-3xl font-bold sm:text-4xl">
+              Make your next job a better one.
+            </h2>
           </div>
+          <Link
+            className="mt-7 inline-flex items-center gap-2 rounded-xl bg-[#8ee0ba] px-5 py-3 text-sm font-bold text-[#071f49] transition hover:bg-white lg:mt-0"
+            to="/register"
+          >
+            Get started <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
       </section>
     </div>
