@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Link } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout.jsx";
 import AuthLayout from "../layouts/AuthLayout.jsx";
 import HomePage from "../pages/HomePage.jsx";
@@ -7,6 +7,11 @@ import FindJobsPage from "../pages/FindJobsPage.jsx";
 import NotFoundPage from "../pages/NotFoundPage.jsx";
 import SectionPage from "../pages/SectionPage.jsx";
 import AuthPage from "../pages/AuthPage.jsx";
+import ProtectedRoute from "./ProtectedRoute.jsx";
+import AccountActionPage from "../pages/AccountActionPage.jsx";
+import NidVerificationPage from "../pages/NidVerificationPage.jsx";
+import ProfilePage from "../pages/ProfilePage.jsx";
+import PostJobPage from "../pages/PostJobPage.jsx";
 
 const router = createBrowserRouter([
   {
@@ -71,6 +76,43 @@ const router = createBrowserRouter([
           />
         ),
       },
+    ],
+  },
+
+  {
+    element: <ProtectedRoute />,
+    children: [
+      { path: "verify-nid", element: <NidVerificationPage /> },
+      { path: "profile", element: <ProfilePage /> },
+      { path: "post-job", element: <PostJobPage /> },
+      {
+        path: "dashboard",
+        element: (
+          <div className="mx-auto max-w-5xl px-5 py-16">
+            <h1 className="text-3xl font-bold text-[#011F50]">
+              Your dashboard
+            </h1>
+            <p className="mt-3 text-slate-600">
+              Manage your profile, jobs, proposals, and conversations.
+            </p>
+            <Link
+              className="mt-6 inline-block font-semibold text-[#0066FF]"
+              to="/verify-nid"
+            >
+              Verify your NID
+            </Link>
+          </div>
+        ),
+      },
+    ],
+  },
+
+  {
+    element: <AuthLayout />,
+    children: [
+      { path: "forgot-password", element: <AccountActionPage /> },
+      { path: "reset-password/:token", element: <AccountActionPage /> },
+      { path: "verify-email/:token", element: <AccountActionPage /> },
     ],
   },
 
