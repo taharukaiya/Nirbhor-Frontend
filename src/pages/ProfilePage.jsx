@@ -49,6 +49,8 @@ function ProfilePage() {
   const { showSuccess, showError } = useToast();
   const [form, setForm] = useState(initialProfile);
   const [saving, setSaving] = useState(false);
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [dragActive, setDragActive] = useState(false);
 
   const isWorker = useMemo(
     () =>
@@ -82,6 +84,57 @@ function ProfilePage() {
   function updateField(event) {
     const { name, value } = event.target;
     setForm((current) => ({ ...current, [name]: value }));
+  }
+
+  function handleAvatarFileSelect(file) {
+    if (!file) return;
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showError("Image size must be less than 5MB");
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      showError("Please select a valid image file");
+      return;
+    }
+
+    setAvatarFile(file);
+
+    // Create preview URL
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setForm((current) => ({ ...current, avatar: e.target.result }));
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleFileInputChange(event) {
+    const file = event.target.files?.[0];
+    if (file) handleAvatarFileSelect(file);
+  }
+
+  function handleDragOver(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(true);
+  }
+
+  function handleDragLeave(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleAvatarFileSelect(file);
   }
 
   async function handleSubmit(event) {
@@ -160,14 +213,41 @@ function ProfilePage() {
           </div>
 
           <label className="mt-6 block text-sm font-medium text-slate-700">
-            Profile image URL
-            <input
-              name="avatar"
-              value={form.avatar}
-              onChange={updateField}
-              className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-[#0066FF] focus:ring-4 focus:ring-[#0066FF]/10"
-              placeholder="https://example.com/avatar.jpg"
-            />
+            Profile Picture
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`mt-2 rounded-xl border-2 border-dashed p-6 text-center transition ${
+                dragActive
+                  ? "border-[#0066FF] bg-[#0066FF]/5"
+                  : "border-slate-200 bg-slate-50"
+              }`}
+            >
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileInputChange}
+                className="hidden"
+                id="avatar-upload"
+              />
+              <label
+                htmlFor="avatar-upload"
+                className="cursor-pointer text-sm text-slate-600"
+              >
+                <p className="font-medium text-[#0066FF]">
+                  Click to upload or drag and drop
+                </p>
+                <p className="text-xs text-slate-500">
+                  PNG, JPG, GIF up to 5MB
+                </p>
+              </label>
+            </div>
+            {avatarFile && (
+              <p className="mt-2 text-xs text-slate-600">
+                Selected: {avatarFile.name}
+              </p>
+            )}
           </label>
         </aside>
 

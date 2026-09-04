@@ -12,6 +12,7 @@ import AccountActionPage from "../pages/AccountActionPage.jsx";
 import NidVerificationPage from "../pages/NidVerificationPage.jsx";
 import ProfilePage from "../pages/ProfilePage.jsx";
 import PostJobPage from "../pages/PostJobPage.jsx";
+import ChatPage from "../pages/ChatPage.jsx";
 
 const router = createBrowserRouter([
   {
@@ -22,14 +23,6 @@ const router = createBrowserRouter([
       {
         index: true,
         element: <HomePage />,
-      },
-      {
-        path: "services",
-        element: <FindServicePage />,
-      },
-      {
-        path: "jobs",
-        element: <FindJobsPage />,
       },
       {
         path: "how-it-works",
@@ -78,13 +71,21 @@ const router = createBrowserRouter([
       },
     ],
   },
-
   {
     element: <ProtectedRoute />,
     children: [
+      {
+        path: "services",
+        element: <FindServicePage />,
+      },
+      {
+        path: "jobs",
+        element: <FindJobsPage />,
+      },
       { path: "verify-nid", element: <NidVerificationPage /> },
       { path: "profile", element: <ProfilePage /> },
       { path: "post-job", element: <PostJobPage /> },
+      { path: "chat/:jobId/:proposalId", element: <ChatPage /> },
       {
         path: "dashboard",
         element: (

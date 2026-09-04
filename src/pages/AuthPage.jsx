@@ -1,14 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ArrowRight, CheckCircle } from "../components/ui/Icons.jsx";
 import { useAuth } from "../contexts/useAuth.js";
 import { useToast } from "../contexts/ToastContext.jsx";
+import { googleOAuth } from "../services/api.js";
 
 function AuthPage() {
   const location = useLocation();
   const isRegister = location.pathname === "/register";
   const navigate = useNavigate();
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, updateSession } = useAuth();
   const { showSuccess, showError } = useToast();
   const [form, setForm] = useState({
     name: "",
@@ -17,6 +18,25 @@ function AuthPage() {
     role: "HIRER",
   });
   const [submitting, setSubmitting] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  // Load Google API script
+  useEffect(() => {
+    const scriptId = "google-signin-script";
+    if (document.getElementById(scriptId)) return;
+
+    const script = document.createElement("script");
+    script.id = scriptId;
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+
+    return () => {
+      const elem = document.getElementById(scriptId);
+      if (elem) elem.remove();
+    };
+  }, []);
 
   function updateField(event) {
     setForm((current) => ({
@@ -58,6 +78,56 @@ function AuthPage() {
       setSubmitting(false);
     }
   }
+
+  async function handleGoogleSuccess(response) {
+    setGoogleLoading(true);
+    try {
+      const idToken = response.credential;
+      const session = await googleOAuth(idToken, form.role);
+      const userRole = session?.user?.role || form.role || "HIRER";
+      const destination =
+        userRole === "SERVICE_PROVIDER" ||
+        userRole === "WORKER" ||
+        userRole === "FREELANCER"
+          ? "/jobs"
+          : "/services";
+
+      showSuccess("Signed in with Google successfully.");
+      navigate(destination, { replace: true });
+    } catch (error) {
+      showError(error.message || "Google sign-in failed. Please try again.");
+    } finally {
+      setGoogleLoading(false);
+    }
+  }
+
+  function handleGoogleError() {
+    showError("Google sign-in failed. Please try again.");
+  }
+
+  // Initialize Google Sign-In button
+  useEffect(() => {
+    if (window.google?.accounts?.id) {
+      window.google.accounts.id.initialize({
+        client_id:
+          import.meta.env.VITE_GOOGLE_CLIENT_ID ||
+          "your-google-client-id-here.apps.googleusercontent.com",
+        callback: handleGoogleSuccess,
+        auto_select: false,
+      });
+
+      // Render the button
+      const buttonContainer = document.getElementById("google-signin-button");
+      if (buttonContainer) {
+        window.google.accounts.id.renderButton(buttonContainer, {
+          theme: "outline",
+          size: "large",
+          width: "100%",
+          locale: "en",
+        });
+      }
+    }
+  }, [form.role]);
 
   return (
     <div className="space-y-8">
@@ -141,6 +211,20 @@ function AuthPage() {
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
         </button>
       </form>
+
+      <div className="space-y-3 border-y border-slate-200 py-4">
+        <p className="text-center text-xs font-medium text-slate-500">
+          OR CONTINUE WITH
+        </p>
+        <div
+          id="google-signin-button"
+          className="flex justify-center"
+          style={{
+            opacity: googleLoading ? 0.6 : 1,
+            pointerEvents: googleLoading ? "none" : "auto",
+          }}
+        />
+      </div>
 
       {!isRegister && (
         <Link

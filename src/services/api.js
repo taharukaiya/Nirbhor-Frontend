@@ -84,6 +84,14 @@ export async function login(credentials) {
   });
 }
 
+export async function googleOAuth(idToken, defaultRole = "HIRER") {
+  return request("/auth/google", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ idToken, defaultRole }),
+  });
+}
+
 export async function register(credentials) {
   return request("/auth/register", {
     method: "POST",
@@ -106,6 +114,10 @@ export async function createJob(payload) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
+}
+
+export async function getChat(jobId, proposalId) {
+  return request(`/chats/${jobId}/${proposalId}`);
 }
 
 export async function logout() {

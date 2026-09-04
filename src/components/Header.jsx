@@ -3,13 +3,8 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import logo1 from "../assets/logo1.png";
 import { X, Menu } from "./ui/Icons.jsx";
 import { useAuth } from "../contexts/useAuth.js";
-
-const navigationLinks = [
-  { label: "Find Services", to: "/services" },
-  { label: "Find Jobs", to: "/jobs" },
-  { label: "How It Works", to: "/how-it-works" },
-  { label: "About", to: "/about" },
-];
+import { updateProfile } from "../services/api.js";
+import { useToast } from "../contexts/ToastContext.jsx";
 
 function desktopLinkClass({ isActive }) {
   return [
@@ -33,11 +28,41 @@ function getInitials(name) {
 }
 
 function Header() {
-  const { currentUser, isAuthenticated, signOut } = useAuth();
+  const { currentUser, isAuthenticated, signOut, updateSession } = useAuth();
+  const { showSuccess, showError } = useToast();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [switchingRole, setSwitchingRole] = useState(false);
   const navigate = useNavigate();
+
+  // Build navigation links based on authentication state and role
+  const getNavigationLinks = () => {
+    const staticLinks = [
+      // { label: "Home", to: "/" },
+      { label: "How It Works", to: "/how-it-works" },
+      { label: "About", to: "/about" },
+    ];
+
+    if (!isAuthenticated) {
+      return staticLinks;
+    }
+
+    // Add role-specific links for authenticated users
+    const authLinks = [];
+    if (
+      currentUser?.activeMode === "SERVICE_PROVIDER" ||
+      currentUser?.role === "SERVICE_PROVIDER"
+    ) {
+      authLinks.push({ label: "Find Jobs", to: "/jobs" });
+    } else {
+      authLinks.push({ label: "Find Services", to: "/services" });
+    }
+
+    return [...authLinks, ...staticLinks];
+  };
+
+  const navigationLinks = getNavigationLinks();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 8);
@@ -51,6 +76,29 @@ function Header() {
     setProfileOpen(false);
     await signOut();
     navigate("/");
+  };
+
+  const handleRoleSwitch = async () => {
+    if (!currentUser) return;
+    setSwitchingRole(true);
+    try {
+      const newMode =
+        currentUser.activeMode === "SERVICE_PROVIDER"
+          ? "HIRER"
+          : "SERVICE_PROVIDER";
+      const response = await updateProfile({ activeMode: newMode });
+      await updateSession(response.user);
+      showSuccess(
+        `Switched to ${newMode === "HIRER" ? "Hirer" : "Service Provider"} mode`,
+      );
+      setProfileOpen(false);
+      // Refresh navigation links by re-rendering
+      navigate(0);
+    } catch (error) {
+      showError(error.message || "Failed to switch role");
+    } finally {
+      setSwitchingRole(false);
+    }
   };
 
   return (
@@ -127,6 +175,33 @@ function Header() {
 
               {profileOpen && (
                 <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+                  <div className="border-b border-slate-200 pb-2 mb-2">
+                    <div className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                      Current Mode
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRoleSwitch}
+                      disabled={switchingRole}
+                      className="w-full rounded-xl bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:opacity-50"
+                    >
+                      {switchingRole
+                        ? "Switching..."
+                        : currentUser?.activeMode === "SERVICE_PROVIDER"
+                          ? "🛠️ Service Provider"
+                          : "💼 Hirer"}
+                    </button>
+                    <div className="text-center mt-1">
+                      <button
+                        type="button"
+                        onClick={handleRoleSwitch}
+                        disabled={switchingRole}
+                        className="text-xs font-medium text-[#0066FF] hover:text-[#011F50] disabled:opacity-50"
+                      >
+                        Switch Mode
+                      </button>
+                    </div>
+                  </div>
                   <Link
                     to="/profile"
                     onClick={() => setProfileOpen(false)}

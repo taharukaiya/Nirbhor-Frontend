@@ -1,26 +1,21 @@
 import { Outlet } from "react-router-dom";
-import Header from "../components/Header.jsx";
-import Footer from "../components/Footer.jsx";
+// import Header from "../components/Header.jsx";
+// import Footer from "../components/Footer.jsx";
 
-/**
- * AuthLayout — minimal, centered layout for Login, Register, and Forgot Password pages.
- * Renders a branded split panel on large screens.
- */
 function AuthLayout() {
   return (
     <div className="min-h-screen overflow-x-hidden bg-slate-50">
-      <Header />
-      <main className="flex min-h-[calc(100vh-4rem)] flex-col lg:flex-row">
+      <main className="flex min-h-[calc(100vh)] flex-col lg:flex-row">
         {/* Left — branding panel (desktop only) */}
-        <div className="relative hidden min-w-0 flex-1 flex-col justify-between overflow-hidden bg-[#011F50] p-10 lg:flex xl:p-14">
+        <div className="relative hidden  min-w-0 flex-1 flex-col justify-between overflow-hidden bg-[#011F50] p-10 lg:flex xl:p-14">
           {/* Background accents */}
-          <div className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-[#0066FF]/20 blur-3xl" />
-          <div className="absolute -bottom-20 right-0 h-64 w-64 rounded-full bg-[#00C853]/15 blur-3xl" />
+          <div className="absolute -left-20 -top-20 h-full w-72 rounded-full bg-[#0066FF]/20 blur-3xl" />
+          <div className="absolute -bottom-20 right-0 h-full w-64 rounded-full bg-[#00C853]/15 blur-3xl" />
 
           {/* Quote block */}
-          <div className="relative space-y-6">
-            <blockquote className="text-2xl font-bold leading-snug text-white xl:text-3xl">
-              "A cleaner, safer way to hire and work — built on trust."
+          <div className="flex flex-col  justify-around gap-5 relative space-y-6">
+            <blockquote className="text-4xl font-bold leading-snug text-white xl:text-5xl">
+              A cleaner, safer way to hire and work — built on trust.
             </blockquote>
             <div className="flex flex-wrap gap-3">
               {[
@@ -53,7 +48,6 @@ function AuthLayout() {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 }
