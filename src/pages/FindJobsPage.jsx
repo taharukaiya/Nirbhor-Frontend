@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { JOB_CATEGORIES, JOB_LOCATIONS } from "../data/filterOptions.js";
-import { getJobs } from "../services/api.js";
+import { useMemo, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { getJobs, applyToJob, switchMode, getMyApplications, getCategories } from "../services/api.js";
+import { useAuth } from "../contexts/useAuth.js";
+import { useToast } from "../contexts/ToastContext.jsx";
 import { useRemoteList } from "../hooks/useRemoteList.js";
+import UserProfileModal from "../components/UserProfileModal.jsx";
 import {
-  Search,
   Filter,
   X,
   MapPin,
@@ -13,6 +14,8 @@ import {
   CheckCircle,
   ChevronDown,
   ArrowRight,
+  Send,
+  Search,
 } from "../components/ui/Icons.jsx";
 
 /* ─── Helpers ────────────────────────────────────────────── */
@@ -41,7 +44,6 @@ const BUDGET_OPTIONS = [
 
 const STATUS_OPTIONS = ["All", "Open", "In Progress"];
 
-/** Days ago from ISO date string */
 function daysAgo(dateStr) {
   const d = new Date(dateStr);
   const now = new Date();
@@ -58,15 +60,16 @@ function formatDate(dateStr) {
 }
 
 function formatBudget({ min, max, type }) {
-  const fmt = (n) => `৳${n.toLocaleString()}`;
+  const fmt = (n) => `৳${(n || 0).toLocaleString()}`;
   const range = min === max ? fmt(min) : `${fmt(min)} – ${fmt(max)}`;
   return `${range} ${type === "hourly" ? "/ hr" : "fixed"}`;
 }
 
 /* ─── JobCard ────────────────────────────────────────────── */
 
-function JobCard({ job, featured }) {
+function JobCard({ job, featured, hasApplied, onApply, onViewProfile }) {
   const {
+    id,
     title,
     category,
     location,
@@ -85,7 +88,8 @@ function JobCard({ job, featured }) {
     in_progress: { label: "In Progress", cls: "bg-amber-50 text-amber-600" },
   };
 
-  const { label: statusLabel, cls: statusCls } = statusConfig[status];
+  const { label: statusLabel, cls: statusCls } =
+    statusConfig[status] || statusConfig.open;
 
   return (
     <article
@@ -155,7 +159,7 @@ function JobCard({ job, featured }) {
 
       {/* Skills needed */}
       <div className="mt-3 flex flex-wrap gap-1.5">
-        {skills.map((s) => (
+        {(skills || []).map((s) => (
           <span
             key={s}
             className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs font-medium text-slate-500"
@@ -167,43 +171,187 @@ function JobCard({ job, featured }) {
 
       {/* Footer */}
       <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
-        {/* Hirer info */}
-        <div className="flex items-center gap-2">
+        {/* Hirer info — click to view public profile */}
+        <button
+          type="button"
+          onClick={() => hirer?.id && onViewProfile(hirer.id)}
+          className="flex items-center gap-2 rounded-xl p-1 -ml-1 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0066FF]/40"
+          aria-label={`View ${hirer?.name || "Hirer"}'s profile`}
+        >
           <div
             className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-700 text-xs font-bold text-white"
             aria-hidden="true"
           >
-            {hirer.initials}
+            {hirer?.initials || "H"}
           </div>
           <div>
-            <p className="text-xs font-medium text-slate-700">{hirer.name}</p>
-            {hirer.verified && (
+            <p className="text-xs font-medium text-slate-700 hover:text-[#0066FF] transition">{hirer?.name || "Hirer"}</p>
+            {hirer?.verified && (
               <span className="flex items-center gap-0.5 text-xs text-[#00C853]">
                 <CheckCircle className="h-3 w-3" /> Verified
               </span>
             )}
           </div>
-        </div>
+        </button>
 
         <div className="flex items-center gap-3">
           <span className="text-xs text-slate-400">
-            {proposals} proposal{proposals !== 1 ? "s" : ""}
+            {proposals || 0} proposal{proposals !== 1 ? "s" : ""}
           </span>
-          <Link
-            to="/jobs"
-            className="flex items-center gap-1.5 rounded-xl bg-[#0066FF] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#011F50]"
-          >
-            Apply <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
+          
+          {hasApplied ? (
+            <button
+              type="button"
+              disabled
+              className="flex items-center gap-1.5 rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-2 text-xs font-bold text-emerald-600 cursor-default"
+            >
+              <CheckCircle className="h-3.5 w-3.5" /> Applied
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onApply(job)}
+              className="flex items-center gap-1.5 rounded-xl bg-[#0066FF] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#011F50]"
+            >
+              Apply <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
       </div>
     </article>
   );
 }
 
+/* ─── ApplyModal ─────────────────────────────────────────── */
+
+function ApplyModal({ job, onClose, onSuccess }) {
+  const { showError, showSuccess } = useToast();
+  const [amount, setAmount] = useState(job.budget?.max || job.budget?.min || 500);
+  const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  if (!job) return null;
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!message.trim()) {
+      showError("Please write a short proposal note.");
+      return;
+    }
+
+    if (amount < (job.budget?.min || 0) || amount > (job.budget?.max || Infinity)) {
+      showError(`Offer must be between ৳${job.budget?.min || 0} and ৳${job.budget?.max || 0}`);
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await applyToJob(job.id, {
+        amount: Number(amount),
+        message: message.trim(),
+      });
+      showSuccess("Application submitted successfully!");
+      onSuccess(job.id);
+      onClose();
+    } catch (err) {
+      showError(err.message || "Failed to submit application.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-sm animate-fade-in"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl transition-all animate-fade-in-up"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-500 hover:bg-slate-100"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
+        <h2 className="text-xl font-bold text-[#011F50]">Apply for Job</h2>
+        <p className="mt-1 text-sm font-semibold text-[#0066FF]">{job.title}</p>
+
+        <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-xs text-slate-600 space-y-1">
+          <p>
+            <span className="font-semibold text-slate-700">Category:</span> {job.category}
+          </p>
+          <p>
+            <span className="font-semibold text-slate-700">Budget Range:</span> {formatBudget(job.budget)}
+          </p>
+          <p>
+            <span className="font-semibold text-slate-700">Posted by:</span> {job.hirer?.name || "Hirer"}
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1">
+                Your Offer (৳)
+              </label>
+              {job.budget?.min && job.budget?.max && (
+                <p className="text-xs text-slate-500 mb-2">
+                  Budget Range: ৳{job.budget.min} - ৳{job.budget.max}
+                </p>
+              )}
+              <input
+                type="number"
+                min={job.budget?.min || 0}
+                max={job.budget?.max}
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 p-3 outline-none focus:border-[#0066FF] focus:ring-1 focus:ring-[#0066FF]"
+              />
+            </div>
+          </div>
+
+          <label className="block text-sm font-semibold text-slate-700">
+            Cover Note / Proposal Message
+            <textarea
+              rows="4"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Explain your experience, availability, and why you are the best fit for this job."
+              required
+              className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-normal outline-none focus:border-[#0066FF] focus:ring-4 focus:ring-[#0066FF]/10"
+            />
+          </label>
+
+          <div className="mt-6 flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting || amount < (job.budget?.min || 0) || amount > (job.budget?.max || Infinity)}
+              className="flex-1 rounded-xl bg-[#0066FF] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#011F50] disabled:opacity-50 inline-flex justify-center items-center gap-2"
+            >
+              <Send className="h-4 w-4" />
+              {submitting ? "Submitting..." : "Submit Application"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 /* ─── Filter Sidebar ─────────────────────────────────────── */
 
-function JobFilterPanel({ filters, onChange, onReset, resultCount }) {
+function JobFilterPanel({ filters, onChange, onReset, resultCount, categories }) {
   const hasActiveFilters =
     filters.category !== "All" ||
     filters.location !== "All" ||
@@ -238,20 +386,30 @@ function JobFilterPanel({ filters, onChange, onReset, resultCount }) {
         <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
           Category
         </h3>
-        <div className="space-y-1.5">
-          {JOB_CATEGORIES.map((cat) => (
+        <div className="space-y-1.5 max-h-48 overflow-y-auto pr-2">
+          <label className="flex cursor-pointer items-center gap-2.5">
+            <input
+              type="radio"
+              name="job-category"
+              checked={filters.category === "All"}
+              onChange={() => onChange("category", "All")}
+              className="h-4 w-4 accent-[#0066FF]"
+            />
+            <span className="text-sm text-slate-700">All Categories</span>
+          </label>
+          {categories.map((cat) => (
             <label
-              key={cat}
+              key={cat._id || cat.name}
               className="flex cursor-pointer items-center gap-2.5"
             >
               <input
                 type="radio"
                 name="job-category"
-                checked={filters.category === cat}
-                onChange={() => onChange("category", cat)}
+                checked={filters.category === cat.name}
+                onChange={() => onChange("category", cat.name)}
                 className="h-4 w-4 accent-[#0066FF]"
               />
-              <span className="text-sm text-slate-700">{cat}</span>
+              <span className="text-sm text-slate-700">{cat.name}</span>
             </label>
           ))}
         </div>
@@ -265,7 +423,8 @@ function JobFilterPanel({ filters, onChange, onReset, resultCount }) {
           Location
         </h3>
         <div className="space-y-1.5">
-          {JOB_LOCATIONS.map((loc) => (
+          {/* Static locations for now, but will eventually be dynamic */}
+          {["All", "Dhaka", "Chittagong", "Sylhet", "Rajshahi", "Khulna", "Barisal", "Rangpur", "Mymensingh"].map((loc) => (
             <label
               key={loc}
               className="flex cursor-pointer items-center gap-2.5"
@@ -305,58 +464,6 @@ function JobFilterPanel({ filters, onChange, onReset, resultCount }) {
           ))}
         </div>
       </div>
-
-      <div className="h-px bg-slate-100" />
-
-      {/* Date posted */}
-      <div>
-        <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
-          Date Posted
-        </h3>
-        <div className="space-y-1.5">
-          {DATE_OPTIONS.map(({ value, label }) => (
-            <label
-              key={value}
-              className="flex cursor-pointer items-center gap-2.5"
-            >
-              <input
-                type="radio"
-                name="job-date"
-                checked={filters.dateRange === value}
-                onChange={() => onChange("dateRange", value)}
-                className="h-4 w-4 accent-[#0066FF]"
-              />
-              <span className="text-sm text-slate-700">{label}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div className="h-px bg-slate-100" />
-
-      {/* Budget */}
-      <div>
-        <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
-          Max Budget
-        </h3>
-        <div className="space-y-1.5">
-          {BUDGET_OPTIONS.map(({ value, label }) => (
-            <label
-              key={value}
-              className="flex cursor-pointer items-center gap-2.5"
-            >
-              <input
-                type="radio"
-                name="job-budget"
-                checked={filters.maxBudget === value}
-                onChange={() => onChange("maxBudget", value)}
-                className="h-4 w-4 accent-[#0066FF]"
-              />
-              <span className="text-sm text-slate-700">{label}</span>
-            </label>
-          ))}
-        </div>
-      </div>
     </aside>
   );
 }
@@ -374,12 +481,44 @@ const DEFAULT_FILTERS = {
 const TABS = ["All Jobs", "Open", "Featured"];
 
 function FindJobsPage() {
-  const { data: jobs, loading, error } = useRemoteList(getJobs);
+  const navigate = useNavigate();
+  const { currentUser, isAuthenticated, updateSession } = useAuth();
+  const { showError, showSuccess } = useToast();
+  const { data: jobs, loading, error, reload } = useRemoteList(getJobs);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [activeTab, setActiveTab] = useState("All Jobs");
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [selectedApplyJob, setSelectedApplyJob] = useState(null);
+  const [appliedJobIds, setAppliedJobIds] = useState(new Set());
+  const [viewingProfileId, setViewingProfileId] = useState(null);
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    getCategories().then((data) => {
+      if (data) setCategories(data);
+    }).catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      const controller = new AbortController();
+      getMyApplications(controller.signal)
+        .then(data => {
+          if (data && data.applications) {
+            setAppliedJobIds(new Set(data.applications.map(app => app._id)));
+          }
+        })
+        .catch(err => {
+          if (err.name !== "AbortError") {
+            console.error("Failed to fetch applications:", err);
+          }
+        });
+      return () => controller.abort();
+    }
+  }, [isAuthenticated]);
 
   function handleFilterChange(key, value) {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -391,80 +530,73 @@ function FindJobsPage() {
     setActiveTab("All Jobs");
   }
 
+  async function handleApplyClick(job) {
+    if (!isAuthenticated) {
+      navigate("/login", { replace: true });
+      return;
+    }
+
+    const mode = currentUser?.activeMode || currentUser?.role;
+    if (mode !== "SERVICE_PROVIDER") {
+      try {
+        const response = await switchMode("SERVICE_PROVIDER");
+        if (response?.user) {
+          await updateSession(response.user);
+          showSuccess("Switched to Service Provider mode to apply for jobs.");
+        }
+      } catch {
+        showError("Please switch to Service Provider mode to apply for jobs.");
+        return;
+      }
+    }
+
+    setSelectedApplyJob(job);
+  }
+
+  function handleApplicationSuccess(jobId) {
+    setAppliedJobIds((prev) => new Set(prev).add(jobId));
+    if (typeof reload === "function") reload();
+  }
+
   const filteredJobs = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
-    return jobs
+    return (jobs || [])
       .filter((j) => {
         const matchSearch =
           !q ||
           j.title.toLowerCase().includes(q) ||
           j.category.toLowerCase().includes(q) ||
           j.description.toLowerCase().includes(q) ||
-          j.skills.some((s) => s.toLowerCase().includes(q)) ||
-          j.hirer.name.toLowerCase().includes(q);
+          (j.skills && j.skills.some((s) => s.toLowerCase().includes(q))) ||
+          (j.hirer && j.hirer.name.toLowerCase().includes(q));
 
         const matchCat =
           filters.category === "All" || j.category === filters.category;
         const matchLoc =
           filters.location === "All" || j.district === filters.location;
-
         const matchStatus =
           filters.status === "All" ||
           (filters.status === "Open" && j.status === "open") ||
           (filters.status === "In Progress" && j.status === "in_progress");
 
-        const matchDate =
-          filters.dateRange === "all" ||
-          daysAgo(j.postedAt) <= parseInt(filters.dateRange, 10);
-
-        const matchBudget =
-          filters.maxBudget === "all" ||
-          j.budget.max <= parseInt(filters.maxBudget, 10);
-
-        const matchTab =
-          activeTab === "All Jobs" ||
-          (activeTab === "Open" && j.status === "open") ||
-          (activeTab === "Featured" && j.featured);
-
-        return (
-          matchSearch &&
-          matchCat &&
-          matchLoc &&
-          matchStatus &&
-          matchDate &&
-          matchBudget &&
-          matchTab
-        );
+        return matchSearch && matchCat && matchLoc && matchStatus;
       })
       .sort((a, b) => {
-        if (sortBy === "newest")
-          return new Date(b.postedAt) - new Date(a.postedAt);
-        if (sortBy === "oldest")
-          return new Date(a.postedAt) - new Date(b.postedAt);
-        if (sortBy === "budget_desc") return b.budget.max - a.budget.max;
-        if (sortBy === "budget_asc") return a.budget.min - b.budget.min;
-        if (sortBy === "proposals") return b.proposals - a.proposals;
+        if (sortBy === "newest") return new Date(b.postedAt) - new Date(a.postedAt);
+        if (sortBy === "oldest") return new Date(a.postedAt) - new Date(b.postedAt);
         return 0;
       });
-  }, [searchQuery, sortBy, filters, activeTab, jobs]);
+  }, [searchQuery, sortBy, filters, jobs]);
 
   const activeFilters = [
     filters.category !== "All" && { key: "category", label: filters.category },
     filters.location !== "All" && { key: "location", label: filters.location },
     filters.status !== "All" && { key: "status", label: filters.status },
-    filters.dateRange !== "all" && {
-      key: "dateRange",
-      label: DATE_OPTIONS.find((o) => o.value === filters.dateRange)?.label,
-    },
-    filters.maxBudget !== "all" && {
-      key: "maxBudget",
-      label: BUDGET_OPTIONS.find((o) => o.value === filters.maxBudget)?.label,
-    },
   ].filter(Boolean);
 
   return (
     <div>
-      {/* ── Hero ──────────────────────────────────────────── */}
+      {/* Hero */}
       <section className="bg-[#011F50] text-white">
         <div className="relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(0,200,83,0.12),transparent_50%)]" />
@@ -506,94 +638,21 @@ function FindJobsPage() {
                   aria-label="Sort jobs"
                 >
                   {SORT_OPTIONS.map((o) => (
-                    <option
-                      key={o.value}
-                      value={o.value}
-                      className="text-slate-900"
-                    >
+                    <option key={o.value} value={o.value} className="text-slate-900">
                       {o.label}
                     </option>
                   ))}
                 </select>
                 <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
               </div>
-
-              {/* Mobile filter button */}
-              <button
-                type="button"
-                onClick={() => setFilterDrawerOpen(true)}
-                className="flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-semibold text-white sm:hidden"
-              >
-                <Filter className="h-4 w-4" /> Filters
-                {activeFilters.length > 0 && (
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#0066FF] text-xs font-bold">
-                    {activeFilters.length}
-                  </span>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="border-t border-white/10">
-          <div className="mx-auto w-11/12 lg:w-10/12">
-            <div className="flex gap-1 py-2">
-              {TABS.map((tab) => (
-                <button
-                  key={tab}
-                  type="button"
-                  role="tab"
-                  aria-selected={activeTab === tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
-                    activeTab === tab
-                      ? "bg-white/15 text-white"
-                      : "text-white/60 hover:bg-white/10 hover:text-white"
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── Main content ──────────────────────────────────── */}
+      {/* Main content */}
       <div className="mx-auto w-11/12 min-w-0 py-8 lg:w-10/12">
-        {/* Active filter chips */}
-        {activeFilters.length > 0 && (
-          <div className="mb-6 flex flex-wrap items-center gap-2">
-            <span className="text-sm text-slate-500">Active filters:</span>
-            {activeFilters.map((f) => (
-              <button
-                key={f.key}
-                type="button"
-                onClick={() => {
-                  if (f.key === "dateRange")
-                    handleFilterChange("dateRange", "all");
-                  else if (f.key === "maxBudget")
-                    handleFilterChange("maxBudget", "all");
-                  else handleFilterChange(f.key, "All");
-                }}
-                className="flex items-center gap-1.5 rounded-full border border-[#0066FF]/30 bg-[#0066FF]/10 px-3 py-1 text-xs font-semibold text-[#0066FF] hover:bg-[#0066FF]/20"
-              >
-                {f.label} <X className="h-3 w-3" />
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={resetFilters}
-              className="text-xs font-medium text-slate-400 hover:text-slate-600"
-            >
-              Clear all
-            </button>
-          </div>
-        )}
-
         <div className="grid gap-6 lg:grid-cols-[220px_1fr] xl:grid-cols-[240px_1fr]">
-          {/* Desktop sidebar */}
           <div className="hidden lg:block">
             <div className="sticky top-20 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <JobFilterPanel
@@ -601,13 +660,12 @@ function FindJobsPage() {
                 onChange={handleFilterChange}
                 onReset={resetFilters}
                 resultCount={filteredJobs.length}
+                categories={categories}
               />
             </div>
           </div>
 
-          {/* Job list */}
           <div>
-            {/* Result bar */}
             <div className="mb-5 flex items-center justify-between">
               <p className="text-sm text-slate-600">
                 <span className="font-semibold text-[#011F50]">
@@ -615,21 +673,6 @@ function FindJobsPage() {
                 </span>{" "}
                 job{filteredJobs.length !== 1 ? "s" : ""} found
               </p>
-              <div className="relative hidden sm:block">
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="appearance-none rounded-xl border border-slate-200 bg-white py-2 pl-4 pr-8 text-sm text-slate-700 outline-none focus:border-[#0066FF] shadow-sm"
-                  aria-label="Sort jobs"
-                >
-                  {SORT_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-              </div>
             </div>
 
             {loading ? (
@@ -644,12 +687,17 @@ function FindJobsPage() {
               <div className="grid gap-4 stagger">
                 {filteredJobs.map((job) => (
                   <div key={job.id} className="animate-fade-in-up">
-                    <JobCard job={job} featured={job.featured} />
+                    <JobCard
+                      job={job}
+                      featured={job.featured}
+                      hasApplied={appliedJobIds.has(job.id)}
+                      onApply={handleApplyClick}
+                      onViewProfile={setViewingProfileId}
+                    />
                   </div>
                 ))}
               </div>
             ) : (
-              /* Empty state */
               <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white py-20 text-center">
                 <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
                   <Briefcase className="h-7 w-7 text-slate-400" />
@@ -657,9 +705,6 @@ function FindJobsPage() {
                 <h3 className="text-base font-semibold text-[#011F50]">
                   No jobs found
                 </h3>
-                <p className="mt-2 max-w-xs text-sm text-slate-500">
-                  Try a different search term or clear some filters.
-                </p>
                 <button
                   type="button"
                   onClick={resetFilters}
@@ -673,47 +718,21 @@ function FindJobsPage() {
         </div>
       </div>
 
-      {/* ── Mobile filter drawer ──────────────────────────── */}
-      {filterDrawerOpen && (
-        <div
-          className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-sm lg:hidden animate-fade-in"
-          onClick={() => setFilterDrawerOpen(false)}
-          aria-hidden="true"
-        >
-          <aside
-            className="absolute bottom-0 left-0 right-0 max-h-[85vh] overflow-y-auto rounded-t-3xl bg-white p-6 shadow-2xl animate-fade-in-up"
-            onClick={(e) => e.stopPropagation()}
-            aria-label="Job filter options"
-          >
-            <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-base font-bold text-[#011F50]">
-                Filter Jobs
-              </h2>
-              <button
-                type="button"
-                onClick={() => setFilterDrawerOpen(false)}
-                className="rounded-full border border-slate-200 p-1.5 text-slate-500"
-                aria-label="Close filter drawer"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <JobFilterPanel
-              filters={filters}
-              onChange={handleFilterChange}
-              onReset={resetFilters}
-              resultCount={filteredJobs.length}
-            />
-            <button
-              type="button"
-              onClick={() => setFilterDrawerOpen(false)}
-              className="mt-6 w-full rounded-xl bg-[#0066FF] py-3 text-sm font-semibold text-white"
-            >
-              Show {filteredJobs.length} result
-              {filteredJobs.length !== 1 ? "s" : ""}
-            </button>
-          </aside>
-        </div>
+      {/* Apply Modal */}
+      {selectedApplyJob && (
+        <ApplyModal
+          job={selectedApplyJob}
+          onClose={() => setSelectedApplyJob(null)}
+          onSuccess={handleApplicationSuccess}
+        />
+      )}
+
+      {/* Public Profile Viewer */}
+      {viewingProfileId && (
+        <UserProfileModal
+          userId={viewingProfileId}
+          onClose={() => setViewingProfileId(null)}
+        />
       )}
     </div>
   );

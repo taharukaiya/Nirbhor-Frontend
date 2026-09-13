@@ -1,4 +1,4 @@
-import { createBrowserRouter, Link } from "react-router-dom";
+import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout.jsx";
 import AuthLayout from "../layouts/AuthLayout.jsx";
 import HomePage from "../pages/HomePage.jsx";
@@ -13,6 +13,25 @@ import NidVerificationPage from "../pages/NidVerificationPage.jsx";
 import ProfilePage from "../pages/ProfilePage.jsx";
 import PostJobPage from "../pages/PostJobPage.jsx";
 import ChatPage from "../pages/ChatPage.jsx";
+import HirerDashboardPage from "../pages/HirerDashboardPage.jsx";
+import ProviderDashboardPage from "../pages/ProviderDashboardPage.jsx";
+import PaymentSuccessPage from "../pages/PaymentSuccessPage.jsx";
+import PaymentFailedPage from "../pages/PaymentFailedPage.jsx";
+import WalletPage from "../pages/WalletPage.jsx";
+
+// Admin Panel Imports
+import { AdminRoute } from "../components/admin/AdminRoute.jsx";
+import { AdminProvider } from "../contexts/AdminContext.jsx";
+import { AdminLayout } from "../components/admin/AdminLayout.jsx";
+import { AdminLoginPage } from "../pages/admin/AdminLoginPage.jsx";
+import { AdminOverviewPage } from "../pages/admin/AdminOverviewPage.jsx";
+import { AdminVerificationsPage } from "../pages/admin/AdminVerificationsPage.jsx";
+import { AdminUsersPage } from "../pages/admin/AdminUsersPage.jsx";
+import { AdminJobsPage } from "../pages/admin/AdminJobsPage.jsx";
+import { AdminCategoriesPage } from "../pages/admin/AdminCategoriesPage.jsx";
+import { AdminDisputesPage } from "../pages/admin/AdminDisputesPage.jsx";
+import { AdminManagersPage } from "../pages/admin/AdminManagersPage.jsx";
+import { AdminAuditLogsPage } from "../pages/admin/AdminAuditLogsPage.jsx";
 
 const router = createBrowserRouter([
   {
@@ -69,41 +88,36 @@ const router = createBrowserRouter([
           />
         ),
       },
-    ],
-  },
-  {
-    element: <ProtectedRoute />,
-    children: [
       {
-        path: "services",
-        element: <FindServicePage />,
-      },
-      {
-        path: "jobs",
-        element: <FindJobsPage />,
-      },
-      { path: "verify-nid", element: <NidVerificationPage /> },
-      { path: "profile", element: <ProfilePage /> },
-      { path: "post-job", element: <PostJobPage /> },
-      { path: "chat/:jobId/:proposalId", element: <ChatPage /> },
-      {
-        path: "dashboard",
-        element: (
-          <div className="mx-auto max-w-5xl px-5 py-16">
-            <h1 className="text-3xl font-bold text-[#011F50]">
-              Your dashboard
-            </h1>
-            <p className="mt-3 text-slate-600">
-              Manage your profile, jobs, proposals, and conversations.
-            </p>
-            <Link
-              className="mt-6 inline-block font-semibold text-[#0066FF]"
-              to="/verify-nid"
-            >
-              Verify your NID
-            </Link>
-          </div>
-        ),
+        element: <ProtectedRoute />,
+        children: [
+          {
+            path: "services",
+            element: <FindServicePage />,
+          },
+          {
+            path: "jobs",
+            element: <FindJobsPage />,
+          },
+          { path: "verify-nid", element: <NidVerificationPage /> },
+          { path: "profile", element: <ProfilePage /> },
+          { path: "post-job", element: <PostJobPage /> },
+          { path: "hirer/jobs", element: <HirerDashboardPage /> },
+          {
+            path: "hirer/jobs/:jobId/applicants",
+            element: <HirerDashboardPage />,
+          },
+          { path: "provider/jobs", element: <ProviderDashboardPage /> },
+          { path: "chat", element: <ChatPage /> },
+          { path: "chat/:jobId/:proposalId", element: <ChatPage /> },
+          {
+            path: "dashboard",
+            element: <HirerDashboardPage />,
+          },
+          { path: "payment/success", element: <PaymentSuccessPage /> },
+          { path: "payment/failed", element: <PaymentFailedPage /> },
+          { path: "wallet", element: <WalletPage /> },
+        ],
       },
     ],
   },
@@ -128,6 +142,73 @@ const router = createBrowserRouter([
       {
         path: "register",
         element: <AuthPage />,
+      },
+    ],
+  },
+
+  // Admin Panel Auth & Protected Dashboard Tree
+  {
+    element: (
+      <AdminProvider>
+        <Outlet />
+      </AdminProvider>
+    ),
+    children: [
+      {
+        path: "admin/login",
+        element: <AdminLoginPage />,
+      },
+      {
+        path: "admin",
+        element: <AdminRoute />,
+        children: [
+          {
+            element: <AdminLayout />,
+            children: [
+              {
+                index: true,
+                element: <Navigate to="/admin/dashboard" replace />,
+              },
+              { path: "dashboard", element: <AdminOverviewPage /> },
+              {
+                element: <AdminRoute requiredPermission="canVerifyNID" />,
+                children: [
+                  {
+                    path: "verifications",
+                    element: <AdminVerificationsPage />,
+                  },
+                ],
+              },
+              {
+                element: <AdminRoute requiredPermission="canManageUsers" />,
+                children: [{ path: "users", element: <AdminUsersPage /> }],
+              },
+              {
+                element: <AdminRoute requiredPermission="canManageJobs" />,
+                children: [{ path: "jobs", element: <AdminJobsPage /> }],
+              },
+              {
+                element: <AdminRoute requiredPermission="canModerateContent" />,
+                children: [
+                  { path: "categories", element: <AdminCategoriesPage /> },
+                ],
+              },
+              {
+                element: <AdminRoute requiredPermission="canHandleDisputes" />,
+                children: [
+                  { path: "disputes", element: <AdminDisputesPage /> },
+                ],
+              },
+              {
+                element: <AdminRoute superAdminOnly={true} />,
+                children: [
+                  { path: "managers", element: <AdminManagersPage /> },
+                  { path: "audit-logs", element: <AdminAuditLogsPage /> },
+                ],
+              },
+            ],
+          },
+        ],
       },
     ],
   },

@@ -3,13 +3,37 @@ const API_BASE_URL = (import.meta.env.VITE_API_URL || "/api").replace(
   "",
 );
 
-async function request(path, options = {}) {
+async function request(path, options = {}, isRetry = false) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: { Accept: "application/json", ...options.headers },
     credentials: "include",
     ...options,
+    headers: {
+      Accept: "application/json",
+      ...(options.headers || {}),
+    },
   });
+
   if (!response.ok) {
+    if (
+      response.status === 401 &&
+      !isRetry &&
+      !path.startsWith("/auth/login") &&
+      !path.startsWith("/auth/register") &&
+      !path.startsWith("/auth/refresh")
+    ) {
+      try {
+        const refreshRes = await fetch(`${API_BASE_URL}/auth/refresh`, {
+          method: "POST",
+          credentials: "include",
+        });
+        if (refreshRes.ok) {
+          return request(path, options, true);
+        }
+      } catch {
+        // Refresh failed, proceed to handle original 401 error
+      }
+    }
+
     let message = `Request failed with status ${response.status}`;
     try {
       const payload = await response.json();
@@ -38,6 +62,13 @@ function listFromResponse(payload, key) {
 
 export async function getServices(signal) {
   return listFromResponse(await request("/services", { signal }), "services");
+}
+
+export async function getCategories(signal) {
+  return listFromResponse(
+    await request("/categories", { signal }),
+    "categories",
+  );
 }
 
 export async function getJobs(signal) {
@@ -84,14 +115,6 @@ export async function login(credentials) {
   });
 }
 
-export async function googleOAuth(idToken, defaultRole = "HIRER") {
-  return request("/auth/google", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ idToken, defaultRole }),
-  });
-}
-
 export async function register(credentials) {
   return request("/auth/register", {
     method: "POST",
@@ -108,6 +131,42 @@ export async function updateProfile(payload) {
   });
 }
 
+export async function switchMode(mode) {
+  return request("/auth/mode", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mode }),
+  });
+}
+
+export async function uploadAvatar(avatarData) {
+  return request("/auth/avatar", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ avatar: avatarData }),
+  });
+}
+
+export async function getServiceProvider(id) {
+  return request(`/services/${id}`);
+}
+
+export async function applyToJob(jobId, payload) {
+  return request(`/jobs/${jobId}/apply`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload || {}),
+  });
+}
+
+export async function getMyApplications(signal) {
+  return request("/jobs/my-applications", { signal });
+}
+
+export async function getProviderProposals(signal) {
+  return request("/provider/proposals", { signal });
+}
+
 export async function createJob(payload) {
   return request("/jobs", {
     method: "POST",
@@ -116,10 +175,144 @@ export async function createJob(payload) {
   });
 }
 
+export async function getHirerJobs(signal) {
+  const payload = await request("/hirer/jobs", { signal });
+  return listFromResponse(payload, "jobs");
+}
+
+export async function getJobApplicants(jobId, signal) {
+  return request(`/hirer/jobs/${encodeURIComponent(jobId)}/applicants`, {
+    signal,
+  });
+}
+
+export async function getConversations() {
+  return request("/chats/conversations");
+}
+
+export async function initiateChat(payload) {
+  return request("/chats/initiate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload || {}),
+  });
+}
+
 export async function getChat(jobId, proposalId) {
   return request(`/chats/${jobId}/${proposalId}`);
 }
 
+export async function getChatByRoom(chatId) {
+  return request(`/chats/room/${chatId}`);
+}
+
 export async function logout() {
   return request("/auth/logout", { method: "POST" });
+}
+
+export async function changePassword(currentPassword, newPassword) {
+  return request("/auth/change-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+}
+
+export async function getPublicUser(userId) {
+  return request(`/auth/users/${encodeURIComponent(userId)}/public`);
+}
+
+export async function deleteJob(jobId) {
+  return request(`/jobs/${encodeURIComponent(jobId)}`, { method: "DELETE" });
+}
+
+export async function reportMessage(chatId, messageId, reason) {
+  return request(
+    `/chats/room/${encodeURIComponent(chatId)}/messages/${encodeURIComponent(messageId)}/report`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reason }),
+    },
+  );
+}
+
+export async function acceptJobProposal(jobId, proposalId) {
+  return request(`/proposals/${encodeURIComponent(proposalId)}/status`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status: "accepted" }),
+  });
+}
+
+export async function rejectJobProposal(jobId, proposalId) {
+  return request(`/proposals/${encodeURIComponent(proposalId)}/status`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status: "rejected" }),
+  });
+}
+
+export async function processJobPayment(jobId, amount) {
+  return request(`/payments/${encodeURIComponent(jobId)}/mock-pay`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ amount }),
+  });
+}
+
+export async function initiateJobPayment(jobId) {
+  return request(`/payments/${encodeURIComponent(jobId)}/initiate`, {
+    method: "POST",
+  });
+}
+
+export async function submitReview(jobId, payload) {
+  return request(`/reviews/jobs/${encodeURIComponent(jobId)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function getJobReviews(jobId, signal) {
+  return request(`/reviews/jobs/${encodeURIComponent(jobId)}`, { signal });
+}
+
+export async function getUserReviews(userId, signal) {
+  return request(`/reviews/users/${encodeURIComponent(userId)}`, { signal });
+}
+
+export async function getNotifications(signal) {
+  return request("/notifications", { signal });
+}
+
+export async function markNotificationAsRead(id) {
+  return request(`/notifications/${encodeURIComponent(id)}/read`, {
+    method: "PATCH",
+  });
+}
+
+export async function processWalletPayment(jobId) {
+  return request(`/payments/${encodeURIComponent(jobId)}/wallet-pay`, {
+    method: "POST",
+  });
+}
+
+export async function releaseJobPayment(jobId) {
+  return request(`/payments/${encodeURIComponent(jobId)}/release`, {
+    method: "POST",
+  });
+}
+
+export async function reportDispute(payload) {
+  return request("/disputes", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function getWalletData(signal) {
+  return request("/wallet", { signal });
 }

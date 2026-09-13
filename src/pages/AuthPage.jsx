@@ -1,42 +1,24 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ArrowRight, CheckCircle } from "../components/ui/Icons.jsx";
+import { ArrowLeft, ArrowRight, CheckCircle } from "../components/ui/Icons.jsx";
 import { useAuth } from "../contexts/useAuth.js";
 import { useToast } from "../contexts/ToastContext.jsx";
-import { googleOAuth } from "../services/api.js";
 
 function AuthPage() {
   const location = useLocation();
   const isRegister = location.pathname === "/register";
   const navigate = useNavigate();
-  const { signIn, signUp, updateSession } = useAuth();
+  const { signIn, signUp } = useAuth();
   const { showSuccess, showError } = useToast();
   const [form, setForm] = useState({
     name: "",
     email: "",
     password: "",
     role: "HIRER",
+    nidNumber: "",
+    dateOfBirth: "",
   });
   const [submitting, setSubmitting] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
-
-  // Load Google API script
-  useEffect(() => {
-    const scriptId = "google-signin-script";
-    if (document.getElementById(scriptId)) return;
-
-    const script = document.createElement("script");
-    script.id = scriptId;
-    script.src = "https://accounts.google.com/gsi/client";
-    script.async = true;
-    script.defer = true;
-    document.head.appendChild(script);
-
-    return () => {
-      const elem = document.getElementById(scriptId);
-      if (elem) elem.remove();
-    };
-  }, []);
 
   function updateField(event) {
     setForm((current) => ({
@@ -47,28 +29,51 @@ function AuthPage() {
 
   async function handleSubmit(event) {
     event.preventDefault();
+
+    if (isRegister) {
+      const cleanNid = String(form.nidNumber || "").trim();
+      if (!cleanNid || !/^\d{10,17}$/.test(cleanNid)) {
+        showError(
+          "Please enter a valid National ID (NID) number (10 to 17 digits).",
+        );
+        return;
+      }
+      if (!form.dateOfBirth) {
+        showError("Please enter your Date of Birth matching your NID record.");
+        return;
+      }
+
+      const dobRegex = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/;
+      if (!dobRegex.test(form.dateOfBirth)) {
+        showError("Please select a valid Date of Birth.");
+        return;
+      }
+    }
+
     setSubmitting(true);
     try {
       const session = isRegister
         ? await signUp({
-            ...form,
-            role:
-              form.role === "SERVICE_PROVIDER" ? "SERVICE_PROVIDER" : "HIRER",
-          })
+          ...form,
+          nidNumber: String(form.nidNumber).trim(),
+          dateOfBirth: form.dateOfBirth,
+          role:
+            form.role === "SERVICE_PROVIDER" ? "SERVICE_PROVIDER" : "HIRER",
+        })
         : await signIn({ email: form.email, password: form.password });
 
       const userRole =
         session?.user?.role || session?.role || form.role || "HIRER";
       const destination =
         userRole === "SERVICE_PROVIDER" ||
-        userRole === "WORKER" ||
-        userRole === "FREELANCER"
+          userRole === "WORKER" ||
+          userRole === "FREELANCER"
           ? "/jobs"
           : "/services";
 
       showSuccess(
         isRegister
-          ? "Account created successfully."
+          ? "Account created and NID verified successfully."
           : "Signed in successfully.",
       );
       navigate(destination, { replace: true });
@@ -79,82 +84,41 @@ function AuthPage() {
     }
   }
 
-  async function handleGoogleSuccess(response) {
-    setGoogleLoading(true);
-    try {
-      const idToken = response.credential;
-      const session = await googleOAuth(idToken, form.role);
-      const userRole = session?.user?.role || form.role || "HIRER";
-      const destination =
-        userRole === "SERVICE_PROVIDER" ||
-        userRole === "WORKER" ||
-        userRole === "FREELANCER"
-          ? "/jobs"
-          : "/services";
-
-      showSuccess("Signed in with Google successfully.");
-      navigate(destination, { replace: true });
-    } catch (error) {
-      showError(error.message || "Google sign-in failed. Please try again.");
-    } finally {
-      setGoogleLoading(false);
-    }
-  }
-
-  function handleGoogleError() {
-    showError("Google sign-in failed. Please try again.");
-  }
-
-  // Initialize Google Sign-In button
-  useEffect(() => {
-    if (window.google?.accounts?.id) {
-      window.google.accounts.id.initialize({
-        client_id:
-          import.meta.env.VITE_GOOGLE_CLIENT_ID ||
-          "your-google-client-id-here.apps.googleusercontent.com",
-        callback: handleGoogleSuccess,
-        auto_select: false,
-      });
-
-      // Render the button
-      const buttonContainer = document.getElementById("google-signin-button");
-      if (buttonContainer) {
-        window.google.accounts.id.renderButton(buttonContainer, {
-          theme: "outline",
-          size: "large",
-          width: "100%",
-          locale: "en",
-        });
-      }
-    }
-  }, [form.role]);
-
   return (
     <div className="space-y-8">
       <div>
-        <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#0066FF]">
-          {isRegister ? "Join Nirbhor" : "Welcome back"}
-        </span>
-        <h1 className="mt-3 text-3xl font-bold tracking-tight text-[#011F50]">
-          {isRegister
-            ? "Build trust into every job."
-            : "Your trusted work network."}
-        </h1>
-        <p className="mt-3 text-sm leading-6 text-slate-500">
-          {isRegister
-            ? "Create an account to hire verified professionals or find your next opportunity."
-            : "Sign in to manage your jobs, proposals, and conversations."}
-        </p>
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.15em] text-[#0066FF] hover:text-[#011F50] transition-colors mb-4"
+        >
+          <ArrowLeft className="h-4 w-4" /> Go to Home
+        </Link>
+        <div>
+          <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#0066FF]">
+            {isRegister ? "Join Nirbhor" : "Welcome back"}
+          </span>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-[#011F50]">
+            {isRegister
+              ? "Build trust into every job."
+              : "Your trusted work network."}
+          </h1>
+          <p className="mt-2 text-sm leading-6 text-slate-500">
+            {isRegister
+              ? "Create an account to hire verified professionals or find your next opportunity."
+              : "Sign in to manage your jobs, proposals, and conversations."}
+          </p>
+        </div>
       </div>
 
       <form className="space-y-4" onSubmit={handleSubmit}>
         {isRegister && (
           <label className="grid gap-2 text-sm font-semibold text-slate-700">
-            Full name
+            Full name (matches NID record)
             <input
               name="name"
               value={form.name}
               onChange={updateField}
+              placeholder="e.g. Rahim Uddin"
               className="rounded-xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none transition focus:border-[#0066FF] focus:ring-4 focus:ring-[#0066FF]/10"
               required
             />
@@ -166,6 +130,7 @@ function AuthPage() {
             name="email"
             value={form.email}
             onChange={updateField}
+            placeholder="user@example.com"
             className="rounded-xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none transition focus:border-[#0066FF] focus:ring-4 focus:ring-[#0066FF]/10"
             type="email"
             autoComplete="email"
@@ -186,18 +151,45 @@ function AuthPage() {
           />
         </label>
         {isRegister && (
-          <label className="grid gap-2 text-sm font-semibold text-slate-700">
-            I am joining as
-            <select
-              className="rounded-xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none focus:border-[#0066FF]"
-              name="role"
-              value={form.role}
-              onChange={updateField}
-            >
-              <option value="HIRER">Hirer</option>
-              <option value="SERVICE_PROVIDER">Service Provider</option>
-            </select>
-          </label>
+          <>
+            <label className="grid gap-2 text-sm font-semibold text-slate-700">
+              National ID (NID) Number
+              <input
+                name="nidNumber"
+                value={form.nidNumber}
+                onChange={updateField}
+                placeholder="e.g. 1234567890"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none transition focus:border-[#0066FF] focus:ring-4 focus:ring-[#0066FF]/10"
+                required
+              />
+              <span className="text-xs text-slate-400 font-normal">
+                10 to 17 digit Bangladesh National ID
+              </span>
+            </label>
+            <label className="grid gap-2 text-sm font-semibold text-slate-700">
+              Date of Birth (matches NID)
+              <input
+                name="dateOfBirth"
+                type="date"
+                value={form.dateOfBirth}
+                onChange={updateField}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none transition focus:border-[#0066FF] focus:ring-4 focus:ring-[#0066FF]/10"
+                required
+              />
+            </label>
+            <label className="grid gap-2 text-sm font-semibold text-slate-700">
+              I am joining as
+              <select
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none focus:border-[#0066FF]"
+                name="role"
+                value={form.role}
+                onChange={updateField}
+              >
+                <option value="HIRER">Hirer</option>
+                <option value="SERVICE_PROVIDER">Service Provider</option>
+              </select>
+            </label>
+          </>
         )}
         <button
           className="group flex w-full items-center justify-center gap-2 rounded-xl bg-[#0066FF] px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-[#0066FF]/20 transition hover:bg-[#011F50]"
@@ -211,20 +203,6 @@ function AuthPage() {
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
         </button>
       </form>
-
-      <div className="space-y-3 border-y border-slate-200 py-4">
-        <p className="text-center text-xs font-medium text-slate-500">
-          OR CONTINUE WITH
-        </p>
-        <div
-          id="google-signin-button"
-          className="flex justify-center"
-          style={{
-            opacity: googleLoading ? 0.6 : 1,
-            pointerEvents: googleLoading ? "none" : "auto",
-          }}
-        />
-      </div>
 
       {!isRegister && (
         <Link

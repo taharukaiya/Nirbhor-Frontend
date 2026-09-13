@@ -1,9 +1,7 @@
 import { io } from "socket.io-client";
 
-const SOCKET_URL = (import.meta.env.VITE_API_URL || "/api").replace(
-  /\/api/,
-  "",
-);
+const SOCKET_URL =
+  import.meta.env.VITE_SOCKET_URL || "";
 
 let socket = null;
 
@@ -33,18 +31,18 @@ export function disconnectSocket() {
 }
 
 /**
- * Join a chat room for a job/proposal
+ * Join a chat room for a job/proposal, chatId, or direct user
  */
-export function joinChat(jobId, proposalId) {
+export function joinChat(jobId, proposalId, targetUserId, chatId) {
   const s = getSocket();
   if (!s) return Promise.reject(new Error("Socket not initialized"));
 
   return new Promise((resolve, reject) => {
-    s.emit("chat:join", { jobId, proposalId }, (response) => {
-      if (response.error) {
+    s.emit("chat:join", { jobId, proposalId, targetUserId, chatId }, (response) => {
+      if (response && response.error) {
         reject(new Error(response.error));
       } else {
-        resolve(response);
+        resolve(response || {});
       }
     });
   });
@@ -126,4 +124,15 @@ export function onRead(callback) {
 
   s.on("chat:read", callback);
   return () => s.off("chat:read", callback);
+}
+
+/**
+ * Listen for new notifications
+ */
+export function onNewNotification(callback) {
+  const s = getSocket();
+  if (!s) return () => {};
+
+  s.on("notification:new", callback);
+  return () => s.off("notification:new", callback);
 }

@@ -1,6 +1,11 @@
-import { Link } from "react-router-dom";
+import { Link, useRouteError } from "react-router-dom";
 
 function NotFoundPage() {
+  const error = useRouteError();
+  if (error) {
+    console.error("Route Error Caught by NotFoundPage:", error);
+  }
+  
   return (
     <div className="flex min-h-[80vh] flex-col items-center justify-center px-6 py-20 text-center">
       {/* Animated 404 */}

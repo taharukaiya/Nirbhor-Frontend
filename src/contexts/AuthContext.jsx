@@ -2,12 +2,20 @@
  * Authentication context boundary for the application.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { AuthContext } from "./authContext.js";
 import { getSession, login, logout, register } from "../services/api.js";
 
+const API_BASE_URL = (import.meta.env.VITE_API_URL || "/api").replace(
+  /\/$/,
+  "",
+);
+
 /**
  * AuthProvider — wrap your router / app root with this component.
+ *
+ * Fixes the "refresh causes logout" bug by attempting a token refresh
+ * when the initial session call fails with 401.
  *
  * @param {{ children: React.ReactNode }} props
  */
@@ -16,17 +24,57 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   function setSessionUser(session) {
-    setCurrentUser(session?.user ?? session ?? null);
+    if (session && 'user' in session) {
+      setCurrentUser(session.user);
+    } else {
+      setCurrentUser(session || null);
+    }
   }
+
+  /**
+   * Attempt to silently refresh the access token via the refresh_token cookie.
+   * Returns the refreshed session user or null.
+   */
+  const attemptSilentRefresh = useCallback(async (signal) => {
+    try {
+      const refreshRes = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: "POST",
+        credentials: "include",
+        signal,
+      });
+      if (!refreshRes.ok) return null;
+      const data = await refreshRes.json();
+      
+      if (data && 'user' in data) {
+        return data.user;
+      }
+      return data || null;
+    } catch {
+      return null;
+    }
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
-    getSession(controller.signal)
-      .then((session) => setSessionUser(session))
-      .catch(() => setSessionUser(null))
-      .finally(() => setLoading(false));
+
+    async function restoreSession() {
+      try {
+        // First, try to get the session with the current access_token
+        const session = await getSession(controller.signal);
+        setSessionUser(session);
+      } catch {
+        // If getSession fails (likely 401 — access_token expired),
+        // attempt a silent refresh using the refresh_token cookie.
+        const user = await attemptSilentRefresh(controller.signal);
+        setCurrentUser(user || null);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    restoreSession();
     return () => controller.abort();
-  }, []);
+  }, [attemptSilentRefresh]);
 
   async function signOut() {
     try {
@@ -62,14 +110,9 @@ export function AuthProvider({ children }) {
     updateSession,
   };
 
-  // Don't render children until auth state is known (prevents flash of wrong UI)
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-[#0066FF]" />
-      </div>
-    );
-  }
+  // We no longer block rendering children here.
+  // Instead, ProtectedRoute and other components read `loading`
+  // from the context to render their own loading states or defer redirects.
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

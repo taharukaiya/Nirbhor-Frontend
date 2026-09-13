@@ -1,17 +1,21 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { SERVICE_CATEGORIES, LOCATIONS } from "../data/filterOptions.js";
-import { getServices } from "../services/api.js";
+import { useNavigate } from "react-router-dom";
+import { getServices, initiateChat, getCategories } from "../services/api.js";
+import { useAuth } from "../contexts/useAuth.js";
+import { useToast } from "../contexts/ToastContext.jsx";
 import { useRemoteList } from "../hooks/useRemoteList.js";
 import {
-  Search,
-  Filter,
   X,
   MapPin,
   Star,
   CheckCircle,
   ChevronDown,
   ArrowRight,
+  MessageSquare,
+  Clock,
+  Briefcase,
+  Search,
+  Filter,
 } from "../components/ui/Icons.jsx";
 
 /* ─── Helpers ────────────────────────────────────────────── */
@@ -46,9 +50,12 @@ function StarRating({ rating }) {
 
 /* ─── ServiceCard ────────────────────────────────────────── */
 
-function ServiceCard({ provider }) {
+function ServiceCard({ provider, onViewProfile }) {
+  const [imgError, setImgError] = useState(false);
+
   const {
     name,
+    avatar,
     category,
     location,
     rating,
@@ -68,13 +75,22 @@ function ServiceCard({ provider }) {
       {/* Header row */}
       <div className="flex items-start gap-3">
         {/* Avatar */}
-        <div
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white shadow-sm"
-          style={{ backgroundColor: color }}
-          aria-hidden="true"
-        >
-          {initials}
-        </div>
+        {avatar && !imgError ? (
+          <img
+            src={avatar}
+            alt={name}
+            onError={() => setImgError(true)}
+            className="h-12 w-12 shrink-0 rounded-full object-cover ring-2 ring-[#0066FF]/10 shadow-sm"
+          />
+        ) : (
+          <div
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white shadow-sm"
+            style={{ backgroundColor: color || "#011F50" }}
+            aria-hidden="true"
+          >
+            {initials}
+          </div>
+        )}
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -104,7 +120,7 @@ function ServiceCard({ provider }) {
 
       {/* Bio */}
       <p className="mt-2.5 line-clamp-2 text-sm leading-6 text-slate-600">
-        {bio}
+        {bio || "Experienced service professional."}
       </p>
 
       {/* Skills */}
@@ -147,19 +163,175 @@ function ServiceCard({ provider }) {
       </div>
 
       {/* CTA */}
-      <Link
-        to="/services"
-        className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-[#0066FF] px-4 py-2.5 text-sm font-semibold text-[#0066FF] transition-all hover:bg-[#0066FF] hover:text-white"
+      <button
+        type="button"
+        onClick={() => onViewProfile(provider)}
+        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-[#0066FF] px-4 py-2.5 text-sm font-semibold text-[#0066FF] transition-all hover:bg-[#0066FF] hover:text-white"
       >
         View Profile <ArrowRight className="h-4 w-4" />
-      </Link>
+      </button>
     </article>
+  );
+}
+
+/* ─── Provider Profile Modal ───────────────────────────────── */
+
+function ProviderProfileModal({ provider, onClose, onStartChat }) {
+  const [imgError, setImgError] = useState(false);
+
+  if (!provider) return null;
+
+  const {
+    id,
+    name,
+    avatar,
+    category,
+    location,
+    rating,
+    reviews,
+    completedJobs,
+    hourlyRate,
+    workingHours,
+    verified,
+    availableNow,
+    bio,
+    skills,
+    initials,
+  } = provider;
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-sm animate-fade-in"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl transition-all animate-fade-in-up"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close Button */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:bg-slate-100"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
+        {/* Top Profile Header */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+          {avatar && !imgError ? (
+            <img
+              src={avatar}
+              alt={name}
+              onError={() => setImgError(true)}
+              className="h-20 w-20 rounded-full object-cover ring-4 ring-[#0066FF]/10 shadow-md"
+            />
+          ) : (
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#011F50] text-2xl font-bold text-white ring-4 ring-[#0066FF]/10 shadow-md">
+              {initials}
+            </div>
+          )}
+
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-2xl font-bold text-[#011F50]">{name}</h2>
+              {verified && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#00C853]/10 px-2.5 py-0.5 text-xs font-semibold text-[#00C853]">
+                  <CheckCircle className="h-3.5 w-3.5" /> NID Verified
+                </span>
+              )}
+            </div>
+
+            <p className="mt-1 font-medium text-[#0066FF]">{category}</p>
+
+            <div className="mt-1.5 flex flex-wrap items-center gap-4 text-xs text-slate-500">
+              <span className="flex items-center gap-1">
+                <MapPin className="h-3.5 w-3.5" /> {location}
+              </span>
+              {workingHours && (
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3.5 w-3.5" /> {workingHours}
+                </span>
+              )}
+              {availableNow && (
+                <span className="inline-flex items-center gap-1 text-[#0066FF] font-semibold">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#0066FF]" />
+                  Available Now
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="mt-6 grid grid-cols-3 gap-3 rounded-2xl bg-slate-50 p-4 text-center">
+          <div>
+            <div className="flex items-center justify-center gap-1 text-base font-bold text-slate-900">
+              <StarRating rating={rating} />
+              <span>{rating}</span>
+            </div>
+            <p className="mt-0.5 text-xs text-slate-500">{reviews} Reviews</p>
+          </div>
+          <div className="border-x border-slate-200">
+            <p className="text-base font-bold text-slate-900">{completedJobs}</p>
+            <p className="mt-0.5 text-xs text-slate-500">Jobs Completed</p>
+          </div>
+          <div>
+            <p className="text-base font-bold text-[#011F50]">৳{hourlyRate}</p>
+            <p className="mt-0.5 text-xs text-slate-500">Hourly Rate</p>
+          </div>
+        </div>
+
+        {/* Bio */}
+        <div className="mt-6">
+          <h4 className="text-sm font-bold text-[#011F50]">About Service Provider</h4>
+          <p className="mt-2 text-sm leading-relaxed text-slate-600">
+            {bio || "This service provider has not added a detailed bio yet."}
+          </p>
+        </div>
+
+        {/* Skills */}
+        {skills && skills.length > 0 && (
+          <div className="mt-6">
+            <h4 className="text-sm font-bold text-[#011F50]">Skills & Expertise</h4>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {skills.map((s) => (
+                <span
+                  key={s}
+                  className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700"
+                >
+                  {s}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className="mt-8 flex items-center justify-end gap-3 border-t border-slate-100 pt-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            Close
+          </button>
+          <button
+            type="button"
+            onClick={() => onStartChat(id)}
+            className="flex items-center gap-2 rounded-xl bg-[#0066FF] px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-[#0066FF]/20 hover:bg-[#011F50]"
+          >
+            <MessageSquare className="h-4 w-4" /> Start Direct Chat
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
 /* ─── Filter Sidebar ─────────────────────────────────────── */
 
-function FilterPanel({ filters, onChange, onReset, resultCount }) {
+function FilterPanel({ filters, onChange, onReset, resultCount, categories }) {
   const hasActiveFilters =
     filters.category !== "All" ||
     filters.location !== "All" ||
@@ -168,7 +340,6 @@ function FilterPanel({ filters, onChange, onReset, resultCount }) {
 
   return (
     <aside className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-[#011F50]">Filters</h2>
         {hasActiveFilters && (
@@ -182,7 +353,6 @@ function FilterPanel({ filters, onChange, onReset, resultCount }) {
         )}
       </div>
 
-      {/* Result count */}
       <p className="text-xs text-slate-500">
         Showing{" "}
         <span className="font-semibold text-[#011F50]">{resultCount}</span>{" "}
@@ -196,21 +366,32 @@ function FilterPanel({ filters, onChange, onReset, resultCount }) {
         <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
           Category
         </h3>
-        <div className="space-y-1.5">
-          {SERVICE_CATEGORIES.map((cat) => (
+        <div className="space-y-1.5 max-h-48 overflow-y-auto pr-2">
+          <label className="flex cursor-pointer items-center gap-2.5">
+            <input
+              type="radio"
+              name="category"
+              value="All"
+              checked={filters.category === "All"}
+              onChange={() => onChange("category", "All")}
+              className="h-4 w-4 accent-[#0066FF]"
+            />
+            <span className="text-sm text-slate-700">All Categories</span>
+          </label>
+          {categories.map((cat) => (
             <label
-              key={cat}
+              key={cat._id || cat.name}
               className="flex cursor-pointer items-center gap-2.5"
             >
               <input
                 type="radio"
                 name="category"
-                value={cat}
-                checked={filters.category === cat}
-                onChange={() => onChange("category", cat)}
+                value={cat.name}
+                checked={filters.category === cat.name}
+                onChange={() => onChange("category", cat.name)}
                 className="h-4 w-4 accent-[#0066FF]"
               />
-              <span className="text-sm text-slate-700">{cat}</span>
+              <span className="text-sm text-slate-700">{cat.name}</span>
             </label>
           ))}
         </div>
@@ -224,7 +405,8 @@ function FilterPanel({ filters, onChange, onReset, resultCount }) {
           Location
         </h3>
         <div className="space-y-1.5">
-          {LOCATIONS.map((loc) => (
+          {/* Static locations for now, but will eventually be dynamic */}
+          {["All", "Dhaka", "Chittagong", "Sylhet", "Rajshahi", "Khulna", "Barisal", "Rangpur", "Mymensingh"].map((loc) => (
             <label
               key={loc}
               className="flex cursor-pointer items-center gap-2.5"
@@ -308,11 +490,22 @@ const DEFAULT_FILTERS = {
 };
 
 function FindServicePage() {
+  const navigate = useNavigate();
+  const { currentUser, isAuthenticated } = useAuth();
+  const { showError, showSuccess } = useToast();
   const { data: services, loading, error } = useRemoteList(getServices);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("rating");
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [selectedProvider, setSelectedProvider] = useState(null);
+  const [categories, setCategories] = useState([]);
+
+  useState(() => {
+    getCategories().then((data) => {
+      if (data) setCategories(data);
+    }).catch(console.error);
+  });
 
   function handleFilterChange(key, value) {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -323,16 +516,37 @@ function FindServicePage() {
     setSearchQuery("");
   }
 
+  async function handleStartChat(providerId) {
+    if (!isAuthenticated) {
+      navigate("/login", { replace: true });
+      return;
+    }
+
+    try {
+      const response = await initiateChat({ providerId, targetUserId: providerId });
+      const chatId = response.chat?.id || response.chat?._id;
+      showSuccess("Conversation initiated.");
+      setSelectedProvider(null);
+      if (chatId) {
+        navigate(`/chat?chatId=${chatId}`);
+      } else {
+        navigate("/chat");
+      }
+    } catch (err) {
+      showError(err.message || "Unable to initiate chat.");
+    }
+  }
+
   const filteredServices = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
-    return services
+    return (services || [])
       .filter((s) => {
         const matchSearch =
           !q ||
           s.name.toLowerCase().includes(q) ||
           s.category.toLowerCase().includes(q) ||
-          s.bio.toLowerCase().includes(q) ||
-          s.skills.some((sk) => sk.toLowerCase().includes(q));
+          (s.bio && s.bio.toLowerCase().includes(q)) ||
+          (s.skills && s.skills.some((sk) => sk.toLowerCase().includes(q)));
         const matchCat =
           filters.category === "All" || s.category === filters.category;
         const matchLoc =
@@ -343,14 +557,13 @@ function FindServicePage() {
       })
       .sort((a, b) => {
         if (sortBy === "rating") return b.rating - a.rating;
-        if (sortBy === "jobs") return b.completedJobs - a.completedJobs;
-        if (sortBy === "price_asc") return a.hourlyRate - b.hourlyRate;
-        if (sortBy === "price_desc") return b.hourlyRate - a.hourlyRate;
+        if (sortBy === "jobs") return (b.completedJobs || 0) - (a.completedJobs || 0);
+        if (sortBy === "price_asc") return (a.hourlyRate || 0) - (b.hourlyRate || 0);
+        if (sortBy === "price_desc") return (b.hourlyRate || 0) - (a.hourlyRate || 0);
         return 0;
       });
   }, [searchQuery, sortBy, filters, services]);
 
-  // Active filter chips
   const activeFilters = [
     filters.category !== "All" && { key: "category", label: filters.category },
     filters.location !== "All" && { key: "location", label: filters.location },
@@ -363,7 +576,7 @@ function FindServicePage() {
 
   return (
     <div>
-      {/* ── Hero ──────────────────────────────────────────── */}
+      {/* Hero */}
       <section className="bg-[#011F50] text-white">
         <div className="relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(0,102,255,0.2),transparent_50%)]" />
@@ -422,8 +635,6 @@ function FindServicePage() {
                 type="button"
                 onClick={() => setFilterDrawerOpen(true)}
                 className="flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-semibold text-white sm:hidden"
-                aria-expanded={filterDrawerOpen}
-                aria-controls="filter-drawer"
               >
                 <Filter className="h-4 w-4" /> Filters
                 {activeFilters.length > 0 && (
@@ -440,18 +651,29 @@ function FindServicePage() {
         <div className="border-t border-white/10">
           <div className="mx-auto w-11/12 overflow-x-auto py-3 lg:w-10/12 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <div className="flex items-center gap-2">
-              {SERVICE_CATEGORIES.map((cat) => (
+              <button
+                type="button"
+                onClick={() => handleFilterChange("category", "All")}
+                className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                  filters.category === "All"
+                    ? "bg-[#0066FF] text-white"
+                    : "bg-white/10 text-white/70 hover:bg-white/20 hover:text-white"
+                }`}
+              >
+                All
+              </button>
+              {categories.map((cat) => (
                 <button
-                  key={cat}
+                  key={cat._id || cat.name}
                   type="button"
-                  onClick={() => handleFilterChange("category", cat)}
+                  onClick={() => handleFilterChange("category", cat.name)}
                   className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-                    filters.category === cat
+                    filters.category === cat.name
                       ? "bg-[#0066FF] text-white"
                       : "bg-white/10 text-white/70 hover:bg-white/20 hover:text-white"
                   }`}
                 >
-                  {cat}
+                  {cat.name}
                 </button>
               ))}
             </div>
@@ -459,9 +681,8 @@ function FindServicePage() {
         </div>
       </section>
 
-      {/* ── Main content ──────────────────────────────────── */}
+      {/* Main content */}
       <div className="mx-auto w-11/12 min-w-0 py-8 lg:w-10/12">
-        {/* Active filter chips */}
         {activeFilters.length > 0 && (
           <div className="mb-6 flex flex-wrap items-center gap-2">
             <span className="text-sm text-slate-500">Active filters:</span>
@@ -492,7 +713,6 @@ function FindServicePage() {
         )}
 
         <div className="grid gap-6 lg:grid-cols-[220px_1fr] xl:grid-cols-[240px_1fr]">
-          {/* Desktop sidebar */}
           <div className="hidden lg:block">
             <div className="sticky top-20 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <FilterPanel
@@ -500,13 +720,12 @@ function FindServicePage() {
                 onChange={handleFilterChange}
                 onReset={resetFilters}
                 resultCount={filteredServices.length}
+                categories={categories}
               />
             </div>
           </div>
 
-          {/* Results grid */}
           <div>
-            {/* Result bar */}
             <div className="mb-5 flex items-center justify-between">
               <p className="text-sm text-slate-600">
                 <span className="font-semibold text-[#011F50]">
@@ -514,7 +733,6 @@ function FindServicePage() {
                 </span>{" "}
                 provider{filteredServices.length !== 1 ? "s" : ""} found
               </p>
-              {/* Sort — desktop (shown inside search bar on mobile) */}
               <div className="relative hidden sm:block">
                 <select
                   value={sortBy}
@@ -544,12 +762,14 @@ function FindServicePage() {
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 stagger">
                 {filteredServices.map((provider) => (
                   <div key={provider.id} className="animate-fade-in-up">
-                    <ServiceCard provider={provider} />
+                    <ServiceCard
+                      provider={provider}
+                      onViewProfile={(p) => setSelectedProvider(p)}
+                    />
                   </div>
                 ))}
               </div>
             ) : (
-              /* Empty state */
               <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white py-20 text-center">
                 <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
                   <Search className="h-7 w-7 text-slate-400" />
@@ -573,18 +793,24 @@ function FindServicePage() {
         </div>
       </div>
 
-      {/* ── Mobile filter drawer ──────────────────────────── */}
+      {/* Provider Profile Modal */}
+      {selectedProvider && (
+        <ProviderProfileModal
+          provider={selectedProvider}
+          onClose={() => setSelectedProvider(null)}
+          onStartChat={handleStartChat}
+        />
+      )}
+
+      {/* Mobile filter drawer */}
       {filterDrawerOpen && (
         <div
           className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-sm lg:hidden animate-fade-in"
           onClick={() => setFilterDrawerOpen(false)}
-          aria-hidden="true"
         >
           <aside
-            id="filter-drawer"
             className="absolute bottom-0 left-0 right-0 max-h-[85vh] overflow-y-auto rounded-t-3xl bg-white p-6 shadow-2xl animate-fade-in-up"
             onClick={(e) => e.stopPropagation()}
-            aria-label="Filter options"
           >
             <div className="mb-5 flex items-center justify-between">
               <h2 className="text-base font-bold text-[#011F50]">
@@ -594,7 +820,6 @@ function FindServicePage() {
                 type="button"
                 onClick={() => setFilterDrawerOpen(false)}
                 className="rounded-full border border-slate-200 p-1.5 text-slate-500"
-                aria-label="Close filter drawer"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -604,6 +829,7 @@ function FindServicePage() {
               onChange={handleFilterChange}
               onReset={resetFilters}
               resultCount={filteredServices.length}
+              categories={categories}
             />
             <button
               type="button"

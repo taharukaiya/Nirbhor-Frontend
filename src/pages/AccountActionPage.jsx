@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ArrowRight } from "../components/ui/Icons.jsx";
+import { ArrowLeft, ArrowRight } from "../components/ui/Icons.jsx";
 import { forgotPassword, resetPassword, verifyEmail } from "../services/api.js";
 
 function AccountActionPage() {
@@ -50,23 +50,31 @@ function AccountActionPage() {
   return (
     <div className="space-y-7">
       <div>
-        <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#0066FF]">
-          Account security
-        </span>
-        <h1 className="mt-3 text-3xl font-bold text-[#011F50]">
-          {action === "forgot"
-            ? "Recover your account."
-            : action === "reset"
-              ? "Choose a new password."
-              : "Verify your email."}
-        </h1>
-        <p className="mt-3 text-sm leading-6 text-slate-500">
-          {action === "forgot"
-            ? "We will send a short-lived reset link if an account exists."
-            : action === "reset"
-              ? "Use a strong password you have not used elsewhere."
-              : "We are checking your verification link."}
-        </p>
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.15em] text-[#0066FF] hover:text-[#011F50] transition-colors mb-4"
+        >
+          <ArrowLeft className="h-4 w-4" /> Go to Home
+        </Link>
+        <div>
+          <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#0066FF]">
+            Account security
+          </span>
+          <h1 className="mt-2 text-3xl font-bold text-[#011F50]">
+            {action === "forgot"
+              ? "Recover your account."
+              : action === "reset"
+                ? "Choose a new password."
+                : "Verify your email."}
+          </h1>
+          <p className="mt-2 text-sm leading-6 text-slate-500">
+            {action === "forgot"
+              ? "We will send a short-lived reset link if an account exists."
+              : action === "reset"
+                ? "Use a strong password you have not used elsewhere."
+                : "We are checking your verification link."}
+          </p>
+        </div>
       </div>
       {action !== "verify" && (
         <form className="grid gap-4" onSubmit={handleSubmit}>
@@ -123,13 +131,21 @@ function AccountActionPage() {
           {error}
         </p>
       )}
-      <Link
-        className="inline-block text-sm font-bold text-[#0066FF]"
-        to="/login"
-        onClick={() => navigate("/login")}
-      >
-        Back to sign in
-      </Link>
+      <div className="flex items-center gap-4 text-sm">
+        <Link
+          className="font-bold text-[#0066FF] hover:text-[#011F50]"
+          to="/login"
+        >
+          Back to sign in
+        </Link>
+        <span className="text-slate-300">•</span>
+        <Link
+          className="font-semibold text-slate-600 hover:text-[#0066FF]"
+          to="/"
+        >
+          Go to Home
+        </Link>
+      </div>
     </div>
   );
 }

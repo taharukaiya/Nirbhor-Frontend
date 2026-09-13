@@ -5,6 +5,7 @@
     light --default,
     dark --prefersdark;
 }
+@plugin "tailwind-scrollbar";
 
 /* ─── Base ─────────────────────────────────────────────── */
 *,

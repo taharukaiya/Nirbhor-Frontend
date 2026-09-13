@@ -3,29 +3,21 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/useAuth.js";
 import { useToast } from "../contexts/ToastContext.jsx";
 import { createJob } from "../services/api.js";
+import { locations } from "../data/locations.js";
 
-const SERVICE_CATEGORIES = [
-  "Maid",
-  "Plumber",
-  "Electrician",
-  "Carpenter",
-  "Cleaner",
-  "Driver",
-  "Mechanic",
-  "Painter",
-  "Cook",
-  "Tutor",
-  "Other",
-];
+// Removed hardcoded categories
 
 const INITIAL_FORM = {
   title: "",
   description: "",
   category: "",
   serviceType: "",
-  location: "",
-  city: "",
-  address: "",
+  location: {
+    division: "",
+    district: "",
+    thana: "",
+    road: "",
+  },
   budgetMin: "",
   budgetMax: "",
   budgetType: "FIXED",
@@ -40,21 +32,46 @@ function PostJobPage() {
   const { showSuccess, showError } = useToast();
   const [form, setForm] = useState(INITIAL_FORM);
   const [submitting, setSubmitting] = useState(false);
+  const [categories, setCategories] = useState([]);
 
-  const isHirer = useMemo(
-    () => currentUser?.role === "HIRER" || currentUser?.activeMode === "HIRER",
-    [currentUser],
-  );
+  // Fetch categories
+  useState(() => {
+    import("../services/api.js").then(({ getCategories }) => {
+      getCategories().then((data) => {
+        if (data) setCategories(data);
+      }).catch(console.error);
+    });
+  });
+
+  const isAuthenticated = useMemo(() => Boolean(currentUser), [currentUser]);
 
   function updateField(event) {
     const { name, value } = event.target;
-    setForm((current) => ({ ...current, [name]: value }));
+    if (name.startsWith("location.")) {
+      const locField = name.split(".")[1];
+      setForm((current) => {
+        const newLocation = { ...current.location, [locField]: value };
+        // Reset downstream fields
+        if (locField === "division") {
+          newLocation.district = "";
+          newLocation.thana = "";
+        } else if (locField === "district") {
+          newLocation.thana = "";
+        }
+        return {
+          ...current,
+          location: newLocation,
+        };
+      });
+    } else {
+      setForm((current) => ({ ...current, [name]: value }));
+    }
   }
 
   async function handleSubmit(event) {
     event.preventDefault();
-    if (!isHirer) {
-      showError("Only hirers can post jobs.");
+    if (!currentUser) {
+      showError("Please sign in to post a job.");
       return;
     }
 
@@ -64,7 +81,8 @@ function PostJobPage() {
       !form.title.trim() ||
       !form.description.trim() ||
       !form.category ||
-      !form.location.trim()
+      !form.location.division.trim() ||
+      !form.location.district.trim()
     ) {
       showError(
         "Please complete the title, description, category, and location fields.",
@@ -89,9 +107,9 @@ function PostJobPage() {
         category: form.category,
         serviceType: form.serviceType || form.category,
         location: {
-          district: form.location,
-          city: form.city || form.location,
-          address: form.address || form.location,
+          ...form.location,
+          address: form.location.road || form.location.thana || form.location.district,
+          city: form.location.district,
         },
         budget: {
           min: budgetMin,
@@ -117,12 +135,12 @@ function PostJobPage() {
     }
   }
 
-  if (!isHirer) {
+  if (!isAuthenticated) {
     return (
       <div className="mx-auto max-w-2xl px-5 py-16 text-center">
-        <h1 className="text-3xl font-bold text-[#011F50]">Hire only</h1>
+        <h1 className="text-3xl font-bold text-[#011F50]">Sign in required</h1>
         <p className="mt-3 text-slate-600">
-          Please sign in with a hirer account to post a service request.
+          Please sign in to your account to post a service request.
         </p>
       </div>
     );
@@ -179,9 +197,9 @@ function PostJobPage() {
               required
             >
               <option value="">Select</option>
-              {SERVICE_CATEGORIES.map((category) => (
-                <option key={category} value={category}>
-                  {category}
+              {categories.map((c) => (
+                <option key={c._id || c.name} value={c.name}>
+                  {c.name}
                 </option>
               ))}
             </select>
@@ -199,36 +217,72 @@ function PostJobPage() {
           </label>
 
           <label className="grid gap-2 text-sm font-semibold text-slate-700">
-            Location
-            <input
-              name="location"
-              value={form.location}
+            Division
+            <select
+              name="location.division"
+              value={form.location.division}
               onChange={updateField}
               className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 font-normal outline-none transition focus:border-[#0066FF] focus:ring-4 focus:ring-[#0066FF]/10"
-              placeholder="Dhaka"
               required
-            />
+            >
+              <option value="">Select Division</option>
+              {Object.keys(locations).map((div) => (
+                <option key={div} value={div}>
+                  {div}
+                </option>
+              ))}
+            </select>
           </label>
 
           <label className="grid gap-2 text-sm font-semibold text-slate-700">
-            City
-            <input
-              name="city"
-              value={form.city}
+            District
+            <select
+              name="location.district"
+              value={form.location.district}
               onChange={updateField}
-              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 font-normal outline-none transition focus:border-[#0066FF] focus:ring-4 focus:ring-[#0066FF]/10"
-              placeholder="Dhanmondi"
-            />
+              disabled={!form.location.division}
+              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 font-normal outline-none transition focus:border-[#0066FF] focus:ring-4 focus:ring-[#0066FF]/10 disabled:opacity-50"
+              required
+            >
+              <option value="">Select District</option>
+              {form.location.division && locations[form.location.division]
+                ? Object.keys(locations[form.location.division]).map((dist) => (
+                    <option key={dist} value={dist}>
+                      {dist}
+                    </option>
+                  ))
+                : null}
+            </select>
           </label>
 
-          <label className="grid gap-2 text-sm font-semibold text-slate-700 md:col-span-2">
-            Exact address
+          <label className="grid gap-2 text-sm font-semibold text-slate-700">
+            Thana / Upazila
+            <select
+              name="location.thana"
+              value={form.location.thana}
+              onChange={updateField}
+              disabled={!form.location.district}
+              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 font-normal outline-none transition focus:border-[#0066FF] focus:ring-4 focus:ring-[#0066FF]/10 disabled:opacity-50"
+            >
+              <option value="">Select Thana</option>
+              {form.location.division && form.location.district && locations[form.location.division]?.[form.location.district]
+                ? locations[form.location.division][form.location.district].map((thana) => (
+                    <option key={thana} value={thana}>
+                      {thana}
+                    </option>
+                  ))
+                : null}
+            </select>
+          </label>
+
+          <label className="grid gap-2 text-sm font-semibold text-slate-700">
+            Exact address / Road
             <input
-              name="address"
-              value={form.address}
+              name="location.road"
+              value={form.location.road}
               onChange={updateField}
               className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 font-normal outline-none transition focus:border-[#0066FF] focus:ring-4 focus:ring-[#0066FF]/10"
-              placeholder="House #12, Road 3, Dhanmondi"
+              placeholder="House #12, Road 3"
             />
           </label>
 
