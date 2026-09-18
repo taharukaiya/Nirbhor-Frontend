@@ -62,13 +62,16 @@ export function AuthProvider({ children }) {
         // First, try to get the session with the current access_token
         const session = await getSession(controller.signal);
         setSessionUser(session);
-      } catch {
+      } catch (error) {
+        if (error.name === "AbortError") return;
         // If getSession fails (likely 401 — access_token expired),
         // attempt a silent refresh using the refresh_token cookie.
         const user = await attemptSilentRefresh(controller.signal);
         setCurrentUser(user || null);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     }
 
@@ -81,6 +84,7 @@ export function AuthProvider({ children }) {
       await logout();
     } finally {
       setCurrentUser(null);
+      import("../services/socketService.js").then((mod) => mod.disconnectSocket());
     }
   }
 

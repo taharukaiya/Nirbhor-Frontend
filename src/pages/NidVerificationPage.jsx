@@ -1,8 +1,10 @@
+import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { submitNid } from "../services/api.js";
 
 function NidVerificationPage() {
+  useDocumentTitle("Nid Verification");
   const navigate = useNavigate();
   const [nidNumber, setNidNumber] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");

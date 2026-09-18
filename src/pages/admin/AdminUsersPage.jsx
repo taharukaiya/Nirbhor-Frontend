@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { getAdminUsers, suspendUser } from "../../services/adminApi.js";
 import { useToast } from "../../contexts/ToastContext.jsx";
+import { useDocumentTitle } from "../../hooks/useDocumentTitle.js";
 
 export function AdminUsersPage() {
+  useDocumentTitle("Admin  Users");
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -43,8 +45,8 @@ export function AdminUsersPage() {
     <div className="space-y-6 font-sans">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-white">User Management</h1>
-          <p className="mt-1 text-xs text-slate-400">
+          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">User Management</h1>
+          <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
             View registered Hirers and Service Providers, inspect ratings, and manage account suspensions
           </p>
         </div>
@@ -54,18 +56,18 @@ export function AdminUsersPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by name, email, or phone..."
-          className="w-72 rounded-xl border border-slate-800 bg-slate-900 px-4 py-2 text-xs font-medium text-white outline-none focus:border-[#0066FF]"
+          className="w-72 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-2 text-xs font-medium text-slate-900 dark:text-white outline-none focus:border-[#0066FF]"
         />
       </div>
 
       {loading ? (
         <div className="flex h-64 items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-700 border-t-[#0066FF]" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-300 dark:border-slate-700 border-t-[#0066FF]" />
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/80 shadow-xl">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="border-b border-slate-800 bg-slate-950/60 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 shadow-xl">
+          <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+            <thead className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-100 dark:bg-slate-950/60 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
               <tr>
                 <th className="p-4">User</th>
                 <th className="p-4">Phone</th>
@@ -75,25 +77,25 @@ export function AdminUsersPage() {
                 <th className="p-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
               {filteredUsers.map((u) => (
-                <tr key={u._id || u.id} className="hover:bg-slate-800/40">
+                <tr key={u._id || u.id} className="hover:bg-slate-50 dark:bg-slate-800/40">
                   <td className="p-4">
-                    <div className="font-bold text-white">{u.name}</div>
-                    <div className="text-[11px] text-slate-400">{u.email}</div>
+                    <div className="font-bold text-slate-900 dark:text-white">{u.name}</div>
+                    <div className="text-[11px] text-slate-600 dark:text-slate-400">{u.email}</div>
                   </td>
-                  <td className="p-4 text-slate-300">{u.phone || "N/A"}</td>
-                  <td className="p-4 font-semibold text-slate-200">
+                  <td className="p-4 text-slate-700 dark:text-slate-300">{u.phone || "N/A"}</td>
+                  <td className="p-4 font-semibold text-slate-800 dark:text-slate-200">
                     {u.activeMode || u.role}
                   </td>
                   <td className="p-4">
                     <div className="text-[11px]">
                       <span className="text-amber-400">★ {u.profile?.providerRating || u.profile?.rating || 0}</span>{" "}
-                      <span className="text-slate-500">Provider</span>
+                      <span className="text-slate-500 dark:text-slate-400">Provider</span>
                     </div>
                     <div className="text-[11px]">
                       <span className="text-amber-400">★ {u.profile?.hirerRating || 0}</span>{" "}
-                      <span className="text-slate-500">Hirer</span>
+                      <span className="text-slate-500 dark:text-slate-400">Hirer</span>
                     </div>
                   </td>
                   <td className="p-4">

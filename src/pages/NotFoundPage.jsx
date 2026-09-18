@@ -1,7 +1,11 @@
 import { Link, useRouteError } from "react-router-dom";
+import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
+import { useTranslation } from "react-i18next";
 
 function NotFoundPage() {
+  useDocumentTitle("Not Found");
   const error = useRouteError();
+  const { t } = useTranslation();
   if (error) {
     console.error("Route Error Caught by NotFoundPage:", error);
   }
@@ -16,7 +20,7 @@ function NotFoundPage() {
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="rounded-2xl bg-[#0066FF]/10 px-5 py-2">
             <span className="text-sm font-bold tracking-widest text-[#0066FF] uppercase">
-              Page Not Found
+              {t("notFound.title")}
             </span>
           </div>
         </div>
@@ -41,25 +45,31 @@ function NotFoundPage() {
       </div>
 
       <h1 className="text-2xl font-bold text-[#011F50] sm:text-3xl">
-        Oops — this page doesn't exist.
+        Oops — {t("notFound.message")}
       </h1>
       <p className="mt-3 max-w-sm text-slate-500">
-        The page you're looking for may have been moved, renamed, or never
-        existed. Let's get you back on track.
+        {t("notFound.message")}
       </p>
+      {error && (
+        <div className="mt-8 max-w-2xl bg-red-50 text-red-600 p-4 rounded-xl text-left overflow-auto text-xs font-mono">
+          <p className="font-bold">Error Caught by Boundary:</p>
+          <p>{error.message || String(error)}</p>
+          <pre className="mt-2">{error.stack}</pre>
+        </div>
+      )}
 
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
         <Link
           className="rounded-full bg-[#0066FF] px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#011F50] hover:shadow-md"
           to="/"
         >
-          Back to Home
+          {t("notFound.backHome")}
         </Link>
         <Link
           className="rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition-colors hover:border-[#0066FF] hover:text-[#0066FF]"
           to="/services"
         >
-          Find Services
+          {t("nav.findServices")}
         </Link>
       </div>
     </div>

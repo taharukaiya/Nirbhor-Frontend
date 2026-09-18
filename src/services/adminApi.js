@@ -1,12 +1,23 @@
 const API_BASE_URL = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
 const API_BASE = `${API_BASE_URL}/admin`;
 
+// Retry on 503 (Service Unavailable) — backend may not have connected to DB yet
+async function fetchWithRetry(url, options = {}, retryCount = 0) {
+  const response = await fetch(url, options);
+  if (response.status === 503 && retryCount < 3) {
+    const delay = (retryCount + 1) * 1500;
+    await new Promise((resolve) => setTimeout(resolve, delay));
+    return fetchWithRetry(url, options, retryCount + 1);
+  }
+  return response;
+}
+
 async function requestAdmin(endpoint, options = {}) {
   const defaultHeaders = {
     "Content-Type": "application/json",
   };
 
-  const response = await fetch(`${API_BASE}${endpoint}`, {
+  const response = await fetchWithRetry(`${API_BASE}${endpoint}`, {
     ...options,
     headers: {
       ...defaultHeaders,
@@ -149,5 +160,18 @@ export async function revokeAdminManager(adminId) {
 export async function getAuditLogs(page = 1, limit = 50) {
   return requestAdmin(`/audit-logs?page=${page}&limit=${limit}`, {
     method: "GET",
+  });
+}
+
+export async function getFinancialReports(period = "monthly", year) {
+  const params = new URLSearchParams({ period });
+  if (year) params.set("year", String(year));
+  return requestAdmin(`/reports?${params.toString()}`, { method: "GET" });
+}
+
+export async function changeAdminPassword(currentPassword, newPassword) {
+  return requestAdmin("/auth/change-password", {
+    method: "POST",
+    body: JSON.stringify({ currentPassword, newPassword }),
   });
 }

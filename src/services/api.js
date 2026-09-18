@@ -3,7 +3,9 @@ const API_BASE_URL = (import.meta.env.VITE_API_URL || "/api").replace(
   "",
 );
 
-async function request(path, options = {}, isRetry = false) {
+// Retry a request on 503 (Service Unavailable) — occurs during backend startup
+// before MongoDB has finished connecting. Retries up to 3 times with backoff.
+async function requestWithRetry(path, options = {}, retryCount = 0) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     credentials: "include",
     ...options,
@@ -12,6 +14,19 @@ async function request(path, options = {}, isRetry = false) {
       ...(options.headers || {}),
     },
   });
+
+  // Retry on 503 (backend starting up / DB not ready)
+  if (response.status === 503 && retryCount < 3) {
+    const delay = (retryCount + 1) * 1500;
+    await new Promise((resolve) => setTimeout(resolve, delay));
+    return requestWithRetry(path, options, retryCount + 1);
+  }
+
+  return response;
+}
+
+async function request(path, options = {}, isRetry = false) {
+  const response = await requestWithRetry(path, options);
 
   if (!response.ok) {
     if (
@@ -253,13 +268,6 @@ export async function rejectJobProposal(jobId, proposalId) {
   });
 }
 
-export async function processJobPayment(jobId, amount) {
-  return request(`/payments/${encodeURIComponent(jobId)}/mock-pay`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ amount }),
-  });
-}
 
 export async function initiateJobPayment(jobId) {
   return request(`/payments/${encodeURIComponent(jobId)}/initiate`, {
@@ -279,9 +287,6 @@ export async function getJobReviews(jobId, signal) {
   return request(`/reviews/jobs/${encodeURIComponent(jobId)}`, { signal });
 }
 
-export async function getUserReviews(userId, signal) {
-  return request(`/reviews/users/${encodeURIComponent(userId)}`, { signal });
-}
 
 export async function getNotifications(signal) {
   return request("/notifications", { signal });
@@ -315,4 +320,25 @@ export async function reportDispute(payload) {
 
 export async function getWalletData(signal) {
   return request("/wallet", { signal });
+}
+
+export async function requestWithdrawal(amount, method, accountDetails) {
+  return request("/wallet/withdraw", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ amount, method, accountDetails }),
+  });
+}
+
+export async function initiateWalletDeposit(amount) {
+  return request("/wallet/deposit", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ amount }),
+  });
+}
+
+
+export async function getUserReviews(userId, signal) {
+  return request(`/reviews/users/${encodeURIComponent(userId)}`, { signal });
 }

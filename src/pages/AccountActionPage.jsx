@@ -1,9 +1,11 @@
+import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight } from "../components/ui/Icons.jsx";
 import { forgotPassword, resetPassword, verifyEmail } from "../services/api.js";
 
 function AccountActionPage() {
+  useDocumentTitle("Account Action");
   const location = useLocation();
   const navigate = useNavigate();
   const action = location.pathname.startsWith("/forgot-password")

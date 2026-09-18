@@ -14,6 +14,7 @@ import {
   CheckCircle,
 } from "../components/ui/Icons.jsx";
 import ReportModal from "../components/ReportModal.jsx";
+import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 
 const STATUS_FILTERS = ["ALL", "PENDING", "ACCEPTED", "REJECTED", "COMPLETED"];
 
@@ -50,16 +51,16 @@ function ReviewModal({ job, onClose, onSuccess }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
-        <div className="border-b border-slate-100 px-6 py-4">
-          <h3 className="text-lg font-bold text-[#011F50]">Rate Hirer</h3>
-          <p className="text-sm text-slate-500">
+      <div className="w-full max-w-md overflow-hidden rounded-3xl glass-panel shadow-2xl">
+        <div className="border-b border-slate-100 px-6 py-5 bg-white/40">
+          <h3 className="text-xl font-black tracking-tight text-[#011F50]">Rate Hirer</h3>
+          <p className="mt-1 text-sm text-slate-500">
             How was your experience working with the hirer for "{job.title}"?
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6">
-          <div className="mb-6 flex justify-center gap-2">
+          <div className="mb-8 flex justify-center gap-2 rounded-2xl bg-white/40 py-6 border border-white/60">
             {[1, 2, 3, 4, 5].map((star) => (
               <button
                 key={star}
@@ -68,43 +69,46 @@ function ReviewModal({ job, onClose, onSuccess }) {
                 className="transition-transform hover:scale-110"
               >
                 <Star
-                  className={`h-8 w-8 ${
-                    star <= rating ? "fill-amber-400 text-amber-400" : "text-slate-200"
+                  className={`h-9 w-9 ${
+                    star <= rating ? "fill-amber-400 text-amber-400 drop-shadow-md" : "text-slate-200"
                   }`}
                 />
               </button>
             ))}
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-700">
                 Comments (Optional)
               </label>
               <textarea
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 p-3 text-sm focus:border-[#0066FF] focus:outline-none focus:ring-1 focus:ring-[#0066FF]"
+                className="w-full rounded-2xl border border-slate-200 bg-white/50 p-4 text-sm focus:border-[#0066FF] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#0066FF]/10 transition-all resize-none"
                 rows="4"
                 placeholder="Share your experience working on this job..."
               />
             </div>
 
-            <div className="flex justify-end gap-3 pt-2">
+            <div className="flex justify-end gap-3 pt-4">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={submitting}
-                className="rounded-xl px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                className="rounded-xl px-5 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-100"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                disabled={submitting}
-                className="rounded-xl bg-[#0066FF] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#011F50] disabled:opacity-50"
+                disabled={submitting || rating === 0}
+                className="inline-flex justify-center items-center gap-2 rounded-xl bg-[#0066FF] px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-[#0066FF]/20 transition hover:bg-[#011F50] disabled:opacity-50"
               >
-                {submitting ? "Submitting..." : "Submit Review"}
+                {submitting && (
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                )}
+                Submit Review
               </button>
             </div>
           </div>
@@ -115,6 +119,7 @@ function ReviewModal({ job, onClose, onSuccess }) {
 }
 
 export default function ProviderDashboardPage() {
+  useDocumentTitle("Provider Dashboard");
   const navigate = useNavigate();
   const { currentUser } = useAuth();
   const { showError } = useToast();
@@ -196,8 +201,12 @@ export default function ProviderDashboardPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 pb-20">
-      <main className="mx-auto mt-8 w-full max-w-5xl flex-1 px-6">
+    <div className="flex min-h-[100dvh] flex-col bg-gradient-to-br from-slate-50 via-white to-blue-50/30 relative overflow-hidden pb-20 pt-24">
+      {/* Decorative Blur Orbs */}
+      <div className="pointer-events-none absolute left-0 top-0 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#0066FF]/10 blur-[120px]" />
+      <div className="pointer-events-none absolute right-0 bottom-0 h-[30rem] w-[30rem] translate-x-1/3 translate-y-1/3 rounded-full bg-[#0066FF]/5 blur-[120px]" />
+
+      <main className="mx-auto mt-8 w-full max-w-5xl flex-1 px-6 relative z-10">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-[#011F50] sm:text-3xl">
@@ -210,19 +219,19 @@ export default function ProviderDashboardPage() {
         </div>
 
         <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="glass-panel rounded-2xl p-5 transition-all duration-300 hover:shadow-[0_8px_32px_rgba(0,0,0,0.06)]">
             <p className="text-sm font-medium text-slate-500">Total Applied</p>
             <p className="mt-2 text-3xl font-bold text-[#011F50]">{metrics.totalApplied}</p>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="glass-panel rounded-2xl p-5 transition-all duration-300 hover:shadow-[0_8px_32px_rgba(0,0,0,0.06)]">
             <p className="text-sm font-medium text-slate-500">Accepted</p>
             <p className="mt-2 text-3xl font-bold text-[#00C853]">{metrics.accepted}</p>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="glass-panel rounded-2xl p-5 transition-all duration-300 hover:shadow-[0_8px_32px_rgba(0,0,0,0.06)]">
             <p className="text-sm font-medium text-slate-500">Pending</p>
             <p className="mt-2 text-3xl font-bold text-amber-500">{metrics.pending}</p>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="glass-panel rounded-2xl p-5 transition-all duration-300 hover:shadow-[0_8px_32px_rgba(0,0,0,0.06)]">
             <p className="text-sm font-medium text-slate-500">Completed</p>
             <p className="mt-2 text-3xl font-bold text-[#0066FF]">{metrics.completed}</p>
           </div>
@@ -237,7 +246,7 @@ export default function ProviderDashboardPage() {
               className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
                 statusFilter === status
                   ? "bg-[#0066FF] text-white"
-                  : "bg-white text-slate-600 shadow-sm hover:bg-slate-50 border border-slate-200"
+                  : "bg-white/50 backdrop-blur-sm text-slate-600 shadow-sm hover:bg-white border border-slate-200"
               }`}
             >
               {status.charAt(0) + status.slice(1).toLowerCase()}
@@ -250,7 +259,7 @@ export default function ProviderDashboardPage() {
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0066FF]/20 border-t-[#0066FF]" />
           </div>
         ) : filteredJobs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white py-24 text-center">
+          <div className="flex flex-col items-center justify-center glass-panel border-dashed border-slate-300 rounded-2xl py-24 text-center">
             <Briefcase className="mb-4 h-12 w-12 text-slate-300" />
             <h3 className="mb-1 text-lg font-bold text-slate-900">
               No applications found
@@ -284,7 +293,7 @@ export default function ProviderDashboardPage() {
               return (
                 <div
                   key={job.proposalId}
-                  className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:border-[#0066FF]/30 hover:shadow-md"
+                  className="group glass-panel rounded-2xl p-5 transition-all duration-300 hover:border-[#0066FF]/40 hover:shadow-[0_8px_32px_rgba(0,0,0,0.06)]"
                 >
                   <div className="mb-4 flex items-start justify-between">
                     <div>
@@ -338,8 +347,8 @@ export default function ProviderDashboardPage() {
                       {(job.status === "ACCEPTED" || job.status === "IN_PROGRESS") && (
                         <>
                           <Link
-                            to={`/chat/${job.job?._id}`}
-                            className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 hover:text-[#011F50]"
+                            to={`/chat/${job.job?._id}/${job.proposalId}`}
+                            className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white/50 backdrop-blur-sm px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-white hover:text-[#011F50]"
                           >
                             Message Hirer
                           </Link>
@@ -352,15 +361,15 @@ export default function ProviderDashboardPage() {
                         </>
                       )}
                       
-                      {job.status === "COMPLETED" && !reviewedJobs.has(job.job?._id) && (
-                         <button
-                           onClick={() => setReviewJob(job.job)}
-                           className="flex items-center gap-2 rounded-xl bg-amber-400 px-4 py-2 text-sm font-semibold text-amber-950 transition-colors hover:bg-amber-500"
-                         >
-                           <Star className="h-4 w-4" /> Rate Hirer
-                         </button>
+                      {["IN_PROGRESS", "COMPLETED"].includes(job.status) && !(job.hasReviewed || reviewedJobs.has(job.job?._id)) && (
+                        <button
+                          className="flex items-center gap-1.5 whitespace-nowrap rounded-lg bg-yellow-50 px-4 py-2 text-sm font-semibold text-yellow-600 transition hover:bg-yellow-100 hover:text-yellow-700 w-full sm:w-auto justify-center"
+                          onClick={() => setReviewJob(job.job)}
+                        >
+                          <Star className="h-4 w-4" /> Review
+                        </button>
                       )}
-                      {job.status === "COMPLETED" && reviewedJobs.has(job.job?._id) && (
+                      {["IN_PROGRESS", "COMPLETED"].includes(job.status) && (job.hasReviewed || reviewedJobs.has(job.job?._id)) && (
                          <button
                            disabled
                            className="flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-400"

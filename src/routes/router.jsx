@@ -18,6 +18,8 @@ import ProviderDashboardPage from "../pages/ProviderDashboardPage.jsx";
 import PaymentSuccessPage from "../pages/PaymentSuccessPage.jsx";
 import PaymentFailedPage from "../pages/PaymentFailedPage.jsx";
 import WalletPage from "../pages/WalletPage.jsx";
+import TransactionDashboardPage from "../pages/TransactionDashboardPage.jsx";
+import PublicProfilePage from "../pages/PublicProfilePage.jsx";
 
 // Admin Panel Imports
 import { AdminRoute } from "../components/admin/AdminRoute.jsx";
@@ -32,6 +34,7 @@ import { AdminCategoriesPage } from "../pages/admin/AdminCategoriesPage.jsx";
 import { AdminDisputesPage } from "../pages/admin/AdminDisputesPage.jsx";
 import { AdminManagersPage } from "../pages/admin/AdminManagersPage.jsx";
 import { AdminAuditLogsPage } from "../pages/admin/AdminAuditLogsPage.jsx";
+import AdminReportsPage from "../pages/admin/AdminReportsPage.jsx";
 
 const router = createBrowserRouter([
   {
@@ -101,6 +104,7 @@ const router = createBrowserRouter([
           },
           { path: "verify-nid", element: <NidVerificationPage /> },
           { path: "profile", element: <ProfilePage /> },
+          { path: "user/:id", element: <PublicProfilePage /> },
           { path: "post-job", element: <PostJobPage /> },
           { path: "hirer/jobs", element: <HirerDashboardPage /> },
           {
@@ -117,6 +121,7 @@ const router = createBrowserRouter([
           { path: "payment/success", element: <PaymentSuccessPage /> },
           { path: "payment/failed", element: <PaymentFailedPage /> },
           { path: "wallet", element: <WalletPage /> },
+          { path: "transactions", element: <TransactionDashboardPage /> },
         ],
       },
     ],
@@ -204,6 +209,7 @@ const router = createBrowserRouter([
                 children: [
                   { path: "managers", element: <AdminManagersPage /> },
                   { path: "audit-logs", element: <AdminAuditLogsPage /> },
+                  { path: "reports", element: <AdminReportsPage /> },
                 ],
               },
             ],

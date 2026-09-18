@@ -4,7 +4,8 @@ import { getJobs, applyToJob, switchMode, getMyApplications, getCategories } fro
 import { useAuth } from "../contexts/useAuth.js";
 import { useToast } from "../contexts/ToastContext.jsx";
 import { useRemoteList } from "../hooks/useRemoteList.js";
-import UserProfileModal from "../components/UserProfileModal.jsx";
+import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
+import { useTranslation } from "react-i18next";
 import {
   Filter,
   X,
@@ -93,10 +94,10 @@ function JobCard({ job, featured, hasApplied, onApply, onViewProfile }) {
 
   return (
     <article
-      className={`relative rounded-2xl border bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
+      className={`relative rounded-2xl border bg-white p-6 shadow-xl shadow-slate-200/50 ring-1 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl ${
         featured
-          ? "border-[#0066FF]/30 ring-1 ring-[#0066FF]/20"
-          : "border-slate-200"
+          ? "border-[#0066FF]/30 ring-[#0066FF]/20"
+          : "border-slate-100 ring-slate-100"
       }`}
     >
       {featured && (
@@ -239,8 +240,16 @@ function ApplyModal({ job, onClose, onSuccess }) {
       return;
     }
 
-    if (amount < (job.budget?.min || 0) || amount > (job.budget?.max || Infinity)) {
-      showError(`Offer must be between ৳${job.budget?.min || 0} and ৳${job.budget?.max || 0}`);
+    const numAmount = Number(amount);
+    const minBudget = job.budget?.min || 0;
+    const maxBudget = job.budget?.max || Infinity;
+
+    if (numAmount < minBudget || numAmount > maxBudget) {
+      showError(
+        `Offer must be between ৳${minBudget} and ${
+          maxBudget === Infinity ? "no limit" : `৳${maxBudget}`
+        }`
+      );
       return;
     }
 
@@ -481,6 +490,8 @@ const DEFAULT_FILTERS = {
 const TABS = ["All Jobs", "Open", "Featured"];
 
 function FindJobsPage() {
+  useDocumentTitle("Find Jobs");
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { currentUser, isAuthenticated, updateSession } = useAuth();
   const { showError, showSuccess } = useToast();
@@ -493,7 +504,6 @@ function FindJobsPage() {
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [selectedApplyJob, setSelectedApplyJob] = useState(null);
   const [appliedJobIds, setAppliedJobIds] = useState(new Set());
-  const [viewingProfileId, setViewingProfileId] = useState(null);
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
@@ -692,7 +702,7 @@ function FindJobsPage() {
                       featured={job.featured}
                       hasApplied={appliedJobIds.has(job.id)}
                       onApply={handleApplyClick}
-                      onViewProfile={setViewingProfileId}
+                      onViewProfile={(id) => navigate(`/user/${id}`)}
                     />
                   </div>
                 ))}
@@ -727,13 +737,6 @@ function FindJobsPage() {
         />
       )}
 
-      {/* Public Profile Viewer */}
-      {viewingProfileId && (
-        <UserProfileModal
-          userId={viewingProfileId}
-          onClose={() => setViewingProfileId(null)}
-        />
-      )}
     </div>
   );
 }

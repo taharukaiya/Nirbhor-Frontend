@@ -1,21 +1,6 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import logo2 from "../assets/logo2.png";
-
-const platformLinks = [
-  { label: "Find Services", to: "/services" },
-  { label: "Find Jobs", to: "/jobs" },
-  { label: "How It Works", to: "/how-it-works" },
-];
-
-const companyLinks = [
-  { label: "About", to: "/about" },
-  { label: "FAQ", to: "/faq" },
-];
-
-const legalLinks = [
-  { label: "Privacy Policy", to: "/privacy" },
-  { label: "Terms & Conditions", to: "/terms" },
-];
 
 const socialLinks = [
   {
@@ -62,30 +47,23 @@ const socialLinks = [
   },
 ];
 
-function FooterLinkSection({ title, links }) {
-  return (
-    <section>
-      <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-white/50">
-        {title}
-      </h2>
-      <ul className="mt-4 space-y-3">
-        {links.map((link) => (
-          <li key={link.to}>
-            <Link
-              className="text-sm text-white/70 transition-colors duration-150 hover:text-white"
-              to={link.to}
-            >
-              {link.label}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
 function Footer() {
+  const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
+
+  const platformLinks = [
+    { label: t("footer.findServices"), to: "/services" },
+    { label: t("footer.findJobs"), to: "/jobs" },
+    { label: t("footer.howItWorks"), to: "/how-it-works" },
+  ];
+  const companyLinks = [
+    { label: t("footer.about"), to: "/about" },
+    { label: t("footer.faq"), to: "/faq" },
+  ];
+  const legalLinks = [
+    { label: t("footer.privacyPolicy"), to: "/privacy" },
+    { label: t("footer.termsConditions"), to: "/terms" },
+  ];
 
   return (
     <footer className="mt-16 bg-[#011F50]">
@@ -102,9 +80,7 @@ function Footer() {
               />
             </Link>
             <p className="max-w-sm text-sm leading-7 text-white/65">
-              Nirbhor is a trusted marketplace connecting verified Hirers and
-              Service Providers through secure jobs, proposals, job-specific
-              chat, and protected payments.
+              {t("footer.description")}
             </p>
 
             {/* Social links */}
@@ -124,19 +100,53 @@ function Footer() {
             </div>
           </section>
 
-          <FooterLinkSection title="Platform" links={platformLinks} />
-          <FooterLinkSection title="Company" links={companyLinks} />
-          <FooterLinkSection title="Legal" links={legalLinks} />
+          {/* Link columns */}
+          <section>
+            <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-white/50">{t("footer.platform")}</h2>
+            <ul className="mt-4 space-y-3">
+              {platformLinks.map((link) => (
+                <li key={link.to}>
+                  <Link className="text-sm text-white/70 transition-colors duration-150 hover:text-white" to={link.to}>
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+          <section>
+            <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-white/50">{t("footer.company")}</h2>
+            <ul className="mt-4 space-y-3">
+              {companyLinks.map((link) => (
+                <li key={link.to}>
+                  <Link className="text-sm text-white/70 transition-colors duration-150 hover:text-white" to={link.to}>
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+          <section>
+            <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-white/50">{t("footer.legal")}</h2>
+            <ul className="mt-4 space-y-3">
+              {legalLinks.map((link) => (
+                <li key={link.to}>
+                  <Link className="text-sm text-white/70 transition-colors duration-150 hover:text-white" to={link.to}>
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
         </div>
 
         {/* Newsletter */}
         <div className="mt-12 rounded-2xl border border-white/10 bg-white/5 px-6 py-6 sm:flex sm:items-center sm:justify-between">
           <div>
             <h3 className="text-sm font-semibold text-white">
-              Stay in the loop
+              {t("footer.newsletter")}
             </h3>
             <p className="mt-1 text-sm text-white/60">
-              Get platform updates and new features delivered to your inbox.
+              {t("footer.newsletterCopy")}
             </p>
           </div>
           <form
@@ -144,12 +154,12 @@ function Footer() {
             onSubmit={(e) => e.preventDefault()}
           >
             <label className="sr-only" htmlFor="newsletter-email">
-              Email address
+              {t("footer.emailPlaceholder")}
             </label>
             <input
               id="newsletter-email"
               className="w-full rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-sm text-white placeholder:text-white/40 outline-none focus:border-[#0066FF] focus:ring-1 focus:ring-[#0066FF] sm:w-64"
-              placeholder="you@example.com"
+              placeholder={t("footer.emailPlaceholder")}
               type="email"
               autoComplete="email"
             />
@@ -157,15 +167,15 @@ function Footer() {
               className="rounded-xl bg-[#0066FF] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-[#011F50] shrink-0"
               type="submit"
             >
-              Subscribe
+              {t("footer.subscribe")}
             </button>
           </form>
         </div>
 
         {/* Divider + copyright */}
         <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-8 text-xs text-white/40 sm:flex-row">
-          <p>© {currentYear} Nirbhor. All rights reserved.</p>
-          <p>Built with ♥ for Bangladesh</p>
+          <p>{t("footer.copyright", { year: currentYear })}</p>
+          <p>{t("footer.builtWith")}</p>
         </div>
       </div>
     </footer>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
-import logo1 from "../assets/logo1.png";
+import { useTranslation } from "react-i18next";
+import logo2 from "../assets/logo2.png";
 import { X, Menu, MessageSquare, Bell, CheckCircle } from "./ui/Icons.jsx";
 import { useAuth } from "../contexts/useAuth.js";
 import { switchMode, getConversations, getNotifications, markNotificationAsRead } from "../services/api.js";
@@ -15,7 +16,7 @@ function desktopLinkClass({ isActive }) {
     "relative text-sm font-medium transition-colors duration-200 py-1",
     "after:absolute after:bottom-0 after:left-0 after:h-0.5 after:rounded-full after:transition-all after:duration-200",
     isActive
-      ? "text-[#0066FF] after:w-full after:bg-[#0066FF]"
+      ? "text-primary after:w-full after:bg-primary"
       : "text-slate-600 hover:text-[#011F50] after:w-0 hover:after:w-full after:bg-[#011F50]",
   ].join(" ");
 }
@@ -55,6 +56,7 @@ function UserAvatar({ user, size = "sm", onError, imgError }) {
 /* ─── Header ───────────────────────────────────────────────── */
 
 function Header() {
+  const { t, i18n } = useTranslation();
   const { currentUser, isAuthenticated, signOut, updateSession } = useAuth();
   const { showSuccess, showError } = useToast();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -63,7 +65,7 @@ function Header() {
   const [switchingRole, setSwitchingRole] = useState(false);
   const [imgError, setImgError] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  
+
   const [notifications, setNotifications] = useState([]);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -73,6 +75,7 @@ function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const isChatPage = location.pathname.startsWith("/chat");
+  const isHome = location.pathname === "/";
 
   useEffect(() => {
     setImgError(false);
@@ -100,11 +103,11 @@ function Header() {
 
   // Fetch initial unread count & notifications
   useEffect(() => {
-    if (!isAuthenticated) { 
-      setUnreadCount(0); 
+    if (!isAuthenticated) {
+      setUnreadCount(0);
       setUnreadNotificationCount(0);
       setNotifications([]);
-      return; 
+      return;
     }
     initSocket();
     getConversations()
@@ -115,8 +118,8 @@ function Header() {
         );
         setUnreadCount(total);
       })
-      .catch(() => {});
-      
+      .catch(() => { });
+
     getNotifications()
       .then((res) => {
         if (res?.success) {
@@ -124,7 +127,7 @@ function Header() {
           setUnreadNotificationCount(res.unreadCount);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [isAuthenticated]);
 
   // Increment badge on new messages and notifications
@@ -134,6 +137,13 @@ function Header() {
       if (!isChatPage) setUnreadCount((prev) => prev + 1);
     });
     const unsubNotif = onNewNotification((notif) => {
+      if (notif.action === "FORCE_LOGOUT") {
+        showError(notif.message || "Your account has been suspended.");
+        signOut().then(() => {
+          navigate("/login");
+        });
+        return;
+      }
       setUnreadNotificationCount((prev) => prev + 1);
       setNotifications((prev) => [notif, ...prev]);
     });
@@ -156,10 +166,10 @@ function Header() {
   }, []);
 
   const getNavigationLinks = () => {
-    const homeLink = { label: "Home", to: "/" };
+    const homeLink = { label: t("nav.home", "Home"), to: "/" };
     const staticLinks = [
-      { label: "How It Works", to: "/how-it-works" },
-      { label: "About", to: "/about" },
+      { label: t("nav.howItWorks", "How It Works"), to: "/how-it-works" },
+      { label: t("nav.about", "About"), to: "/about" },
     ];
 
     if (!isAuthenticated) return [homeLink, ...staticLinks];
@@ -168,11 +178,11 @@ function Header() {
     const isServiceMode =
       (currentUser?.activeMode || currentUser?.role) === "SERVICE_PROVIDER";
     if (isServiceMode) {
-      authLinks.push({ label: "Find Jobs", to: "/jobs" });
-      authLinks.push({ label: "My Applications", to: "/provider/jobs" });
+      authLinks.push({ label: t("nav.findJobs", "Find Jobs"), to: "/jobs" });
+      authLinks.push({ label: t("nav.myApplications", "My Applications"), to: "/provider/jobs" });
     } else {
-      authLinks.push({ label: "Find Services", to: "/services" });
-      authLinks.push({ label: "My Jobs", to: "/hirer/jobs" });
+      authLinks.push({ label: t("nav.findServices", "Find Services"), to: "/services" });
+      authLinks.push({ label: t("nav.myJobs", "My Jobs"), to: "/hirer/jobs" });
     }
     return [homeLink, ...authLinks, ...staticLinks];
   };
@@ -227,51 +237,76 @@ function Header() {
     currentUser?.role === "HIRER" || currentUser?.activeMode === "HIRER";
   const modeLabel =
     (currentUser?.activeMode || currentUser?.role) === "SERVICE_PROVIDER"
-      ? "🛠️ Service Provider"
-      : "💼 Hirer";
+      ? t("dashboard.providerMode")
+      : t("dashboard.hirerMode");
   const switchLabel =
     (currentUser?.activeMode || currentUser?.role) === "SERVICE_PROVIDER"
-      ? "Switch to Hirer Mode 💼"
-      : "Switch to Service Provider 🛠️";
+      ? t("dashboard.switchToHirer")
+      : t("dashboard.switchToProvider");
 
   return (
     <header
-      className={`sticky top-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? "border-b border-slate-200/80 bg-white/90 shadow-sm backdrop-blur-md"
-          : "border-b border-transparent bg-white/60 backdrop-blur-sm"
-      }`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled || !isHome
+        ? "bg-white/90 shadow-sm backdrop-blur-xl border-b border-slate-200"
+        : "bg-transparent py-2"
+        }`}
     >
-      <div className="mx-auto flex h-16 w-11/12 items-center justify-between lg:w-10/12">
+      <div className="mx-auto flex h-16 w-[95%] max-w-7xl items-center justify-between rounded-2xl transition-all duration-300">
 
         {/* ── Logo ── */}
         <Link
-          className="flex shrink-0 items-center"
+          className="group flex shrink-0 items-center gap-2"
           to="/"
           onClick={closeMenu}
           aria-label="Nirbhor — go to homepage"
         >
-          <img
-            alt="Nirbhor"
-            className="h-10 w-auto object-contain sm:h-12"
-            src={logo1}
-          />
+          <img src={logo2} alt="Nirbhor Logo" className="h-10 w-auto drop-shadow-lg transition-transform duration-300 group-hover:scale-105" />
+          <span className={`text-xl font-extrabold tracking-tight transition-colors duration-300 ${scrolled || !isHome ? "text-slate-800" : "text-white drop-shadow-md"}`}>
+            Nirbhor
+          </span>
         </Link>
 
-        {/* ── Desktop nav (hidden on mobile & tablet) ── */}
+        {/* ── Desktop nav ── */}
         <nav
-          className="hidden items-center gap-5 lg:flex lg:gap-7"
+          className={`hidden items-center gap-1 rounded-full border px-2 py-1.5 backdrop-blur-md shadow-sm lg:flex transition-all duration-300 ${scrolled || !isHome ? "border-slate-200 bg-white/50 hover:bg-slate-50" : "border-white/20 bg-white/10 hover:bg-white/20"}`}
           aria-label="Primary navigation"
         >
           {navigationLinks.map((link) => (
-            <NavLink key={link.to} className={desktopLinkClass} to={link.to}>
+            <NavLink
+              key={link.to}
+              className={({ isActive }) => [
+                "relative px-4 py-2 text-sm font-semibold rounded-full transition-all duration-300 overflow-hidden group",
+                isActive
+                  ? (scrolled || !isHome ? "text-white bg-primary shadow-md shadow-primary/20" : "text-primary bg-white shadow-lg")
+                  : (scrolled || !isHome ? "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80" : "text-white/90 hover:text-white hover:bg-white/20")
+              ].join(" ")}
+              to={link.to}
+            >
               {link.label}
             </NavLink>
           ))}
         </nav>
 
-        {/* ── Desktop right actions (hidden on mobile & tablet) ── */}
-        <div className="hidden items-center gap-2.5 lg:flex">
+        {/* ── Desktop right actions ── */}
+        <div className="hidden items-center gap-3 lg:flex">
+          <button
+            type="button"
+            onClick={() => {
+              const newLng = i18n.language === 'en' ? 'bn' : 'en';
+              i18n.changeLanguage(newLng);
+              localStorage.setItem('appLanguage', newLng);
+            }}
+            title={i18n.language === 'en' ? 'Switch to Bangla' : 'Switch to English'}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-full border transition-all duration-300 ${
+              scrolled || !isHome
+                ? "border-slate-200 bg-white text-slate-700 hover:border-[#0066FF] hover:text-[#0066FF] shadow-sm"
+                : "border-white/30 bg-white/10 text-white hover:bg-white/20"
+            }`}
+          >
+            <span className="text-sm">{i18n.language === 'en' ? '🇧🇩' : '🇬🇧'}</span>
+            <span>{i18n.language === 'en' ? 'বাংলা' : 'EN'}</span>
+          </button>
+          
           {isAuthenticated && (
             <>
               {/* Notifications Dropdown */}
@@ -282,25 +317,28 @@ function Header() {
                     setNotificationsOpen(!notificationsOpen);
                     setProfileOpen(false);
                   }}
-                  className="relative flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-[#0066FF]/40 hover:text-[#0066FF]"
+                  className={`relative flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 ${scrolled || !isHome
+                    ? "bg-slate-100/80 text-slate-600 hover:bg-slate-200 hover:text-primary"
+                    : "bg-white/10 text-white hover:bg-white/20 border border-white/20"
+                    }`}
                   aria-label={unreadNotificationCount > 0 ? `${unreadNotificationCount} unread notifications` : "Notifications"}
                 >
                   <Bell className="h-4 w-4" />
                   {unreadNotificationCount > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-0.5 text-[9px] font-bold text-white shadow-sm">
+                    <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white shadow-sm animate-pulse">
                       {unreadNotificationCount > 99 ? "99+" : unreadNotificationCount}
                     </span>
                   )}
                 </button>
-                
+
                 {notificationsOpen && (
-                  <div className="absolute right-0 top-full z-[200] mt-2 w-80 rounded-2xl border border-slate-200 bg-white shadow-xl flex flex-col max-h-[400px]">
-                    <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 shrink-0">
-                      <h3 className="font-bold text-slate-700">Notifications</h3>
+                  <div className="absolute right-0 top-full z-[200] mt-4 w-80 rounded-2xl border border-white/20 bg-white/90 backdrop-blur-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] flex flex-col max-h-[400px] overflow-hidden transform origin-top-right transition-all duration-300">
+                    <div className="flex items-center justify-between border-b border-slate-200/50 px-5 py-4 bg-white/50">
+                      <h3 className="font-bold text-slate-800">Notifications</h3>
                       {unreadNotificationCount > 0 && (
-                        <button 
+                        <button
                           onClick={() => handleMarkAsRead('all')}
-                          className="text-xs text-[#0066FF] font-semibold hover:underline"
+                          className="text-xs text-primary font-semibold hover:text-[#0047b3] transition-colors"
                         >
                           Mark all as read
                         </button>
@@ -308,14 +346,16 @@ function Header() {
                     </div>
                     <div className="overflow-y-auto p-2 flex flex-col gap-1">
                       {notifications.length === 0 ? (
-                        <div className="py-8 text-center text-sm text-slate-500">
-                          No notifications yet.
+                        <div className="py-10 flex flex-col items-center justify-center text-slate-400">
+                          <Bell className="h-8 w-8 mb-2 opacity-20" />
+                          <span className="text-sm font-medium">No notifications yet</span>
                         </div>
                       ) : (
                         notifications.map((notif) => (
-                          <div 
+                          <div
                             key={notif._id}
-                            className={`flex items-start gap-3 rounded-xl p-3 transition ${notif.read ? 'bg-white opacity-70' : 'bg-blue-50/50'}`}
+                            className={`flex items-start gap-3 rounded-xl p-3 cursor-pointer transition-all duration-200 ${notif.read ? 'bg-transparent hover:bg-slate-50' : 'bg-blue-50/50 hover:bg-blue-50'
+                              }`}
                             onClick={() => {
                               if (!notif.read) handleMarkAsRead(notif._id);
                               if (notif.link) {
@@ -325,16 +365,20 @@ function Header() {
                             }}
                           >
                             <div className="mt-0.5 shrink-0">
-                              <Bell className={`h-4 w-4 ${notif.read ? 'text-slate-400' : 'text-[#0066FF]'}`} />
+                              <div className={`flex h-8 w-8 items-center justify-center rounded-full ${notif.read ? 'bg-slate-100 text-slate-400' : 'bg-primary/10 text-primary'}`}>
+                                <Bell className="h-3.5 w-3.5" />
+                              </div>
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className={`text-sm ${notif.read ? 'font-medium text-slate-700' : 'font-bold text-[#011F50]'}`}>{notif.title}</p>
-                              <p className="text-xs text-slate-500 mt-0.5">{notif.message}</p>
-                              <p className="text-[10px] text-slate-400 mt-1 font-medium">{formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true })}</p>
+                              <p className={`text-sm leading-tight ${notif.read ? 'font-medium text-slate-600' : 'font-bold text-slate-800'}`}>{notif.title}</p>
+                              <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">{notif.message}</p>
+                              <p className="text-[10px] text-slate-400 mt-1.5 font-medium flex items-center gap-1">
+                                {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true })}
+                              </p>
                             </div>
                             {!notif.read && (
                               <div className="shrink-0 pt-1 flex items-center">
-                                <div className="h-2 w-2 rounded-full bg-[#0066FF]"></div>
+                                <div className="h-2 w-2 rounded-full bg-primary shadow-sm shadow-primary/40"></div>
                               </div>
                             )}
                           </div>
@@ -345,15 +389,18 @@ function Header() {
                 )}
               </div>
 
+              {/* Chat icon with badge */}
               <Link
                 to="/chat"
-                id="header-messages-btn"
-                className="relative flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-[#0066FF]/40 hover:text-[#0066FF]"
+                className={`relative flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 ${scrolled || !isHome
+                  ? "bg-slate-100/80 text-slate-600 hover:bg-slate-200 hover:text-primary"
+                  : "bg-white/10 text-white hover:bg-white/20 border border-white/20"
+                  }`}
                 aria-label={unreadCount > 0 ? `${unreadCount} unread messages` : "Messages"}
               >
                 <MessageSquare className="h-4 w-4" />
                 {unreadCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-0.5 text-[9px] font-bold text-white shadow-sm">
+                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white shadow-sm animate-pulse">
                     {unreadCount > 99 ? "99+" : unreadCount}
                   </span>
                 )}
@@ -362,115 +409,106 @@ function Header() {
           )}
 
           {!isAuthenticated ? (
-            <>
+            <div className="flex items-center gap-3 ml-2">
               <Link
-                className="rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 transition-all duration-200 hover:border-[#0066FF] hover:text-[#0066FF]"
+                className={`text-sm font-semibold transition-colors duration-200 ${scrolled || !isHome ? "text-slate-600 hover:text-slate-900" : "text-white/90 hover:text-white"}`}
                 to="/login"
               >
-                Log In
+                {t('nav.signIn')}
               </Link>
               <Link
-                className="rounded-full bg-[#0066FF] px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-[#011F50] hover:shadow-md"
+                className="group relative inline-flex items-center justify-center overflow-hidden rounded-full bg-primary px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-primary/30 active:scale-95"
                 to="/register"
               >
-                Get Started
+                <span className="absolute inset-0 h-full w-full bg-gradient-to-br from-white/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></span>
+                <span className="relative">{t('nav.signUp')}</span>
               </Link>
-            </>
+            </div>
           ) : (
-            <div className="relative" ref={profileRef}>
+            <div className="relative ml-2" ref={profileRef}>
               <button
                 type="button"
                 onClick={() => {
                   setProfileOpen(!profileOpen);
                   setNotificationsOpen(false);
                 }}
-                className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2 py-1.5 shadow-sm transition hover:border-[#0066FF]/30"
+                className={`flex items-center gap-2.5 rounded-full p-1.5 pr-4 transition-all duration-300 ${scrolled || !isHome
+                  ? "bg-white shadow-sm border border-slate-200 hover:shadow-md hover:border-slate-300"
+                  : "bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20"
+                  }`}
                 aria-expanded={profileOpen}
                 aria-haspopup="true"
               >
                 <UserAvatar user={currentUser} size="sm" imgError={imgError} onError={() => setImgError(true)} />
-                <span className="max-w-[90px] truncate pr-1 text-sm font-semibold text-slate-700">
+                <span className={`max-w-[100px] truncate text-sm font-bold ${scrolled || !isHome ? "text-slate-700" : "text-white"}`}>
                   {currentUser?.name?.split(" ")[0] || "Profile"}
                 </span>
               </button>
 
               {profileOpen && (
-                <div className="absolute right-0 top-full z-[200] mt-2 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+                <div className="absolute right-0 top-full z-[200] mt-4 w-64 rounded-2xl border border-white/20 bg-white/95 backdrop-blur-2xl p-3 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] origin-top-right transition-all duration-300">
                   {/* Current mode */}
-                  <div className="border-b border-slate-100 pb-2 mb-2">
-                    <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                      Active Mode
+                  <div className="mb-3 rounded-xl bg-slate-50/80 p-4 border border-slate-100">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                      {t('dashboard.currentMode')}
                     </div>
-                    <div className="px-3 py-1.5 text-sm font-bold text-slate-700">{modeLabel}</div>
+                    <div className="text-sm font-extrabold text-slate-800">{modeLabel}</div>
                     <button
                       type="button"
                       onClick={handleRoleSwitch}
                       disabled={switchingRole}
-                      className="mt-1 w-full rounded-xl border border-[#0066FF]/20 bg-blue-50 px-3 py-2 text-xs font-bold text-[#0066FF] transition hover:bg-[#0066FF] hover:text-white disabled:opacity-50"
+                      className="mt-3 w-full rounded-lg bg-white border border-primary/20 px-3 py-2 text-xs font-bold text-primary shadow-sm transition hover:bg-primary hover:text-white disabled:opacity-50"
                     >
-                      {switchingRole ? "Switching..." : switchLabel}
+                      {switchingRole ? t('common.loading') : switchLabel}
                     </button>
                   </div>
 
-                  <Link
-                    to="/profile"
-                    onClick={() => setProfileOpen(false)}
-                    className="block rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-                  >
-                    Edit Profile
-                  </Link>
-                  <Link
-                    to="/chat"
-                    onClick={() => setProfileOpen(false)}
-                    className="flex items-center justify-between rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-                  >
-                    Messages
-                    {unreadCount > 0 && (
-                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#0066FF] px-1 text-[10px] font-bold text-white">
-                        {unreadCount > 99 ? "99+" : unreadCount}
-                      </span>
+                  <div className="space-y-1">
+                    <Link to="/profile" onClick={() => setProfileOpen(false)} className="flex items-center rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
+                      {t('nav.profile')}
+                    </Link>
+                    <Link to="/chat" onClick={() => setProfileOpen(false)} className="flex items-center justify-between rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
+                      {t('nav.messages')}
+                      {unreadCount > 0 && (
+                        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white shadow-sm">
+                          {unreadCount > 99 ? "99+" : unreadCount}
+                        </span>
+                      )}
+                    </Link>
+                    <Link to="/wallet" onClick={() => setProfileOpen(false)} className="flex items-center rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
+                      {t('nav.wallet')}
+                    </Link>
+                    <Link to="/transactions" onClick={() => setProfileOpen(false)} className="flex items-center rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
+                      {t('wallet.transactions')}
+                    </Link>
+                    {isHirer && (
+                      <>
+                        <Link to="/hirer/jobs" onClick={() => setProfileOpen(false)} className="flex items-center rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
+                          {t('dashboard.myJobs')}
+                        </Link>
+                        <Link to="/post-job" onClick={() => setProfileOpen(false)} className="flex items-center rounded-xl px-3 py-2 text-sm font-semibold text-primary transition hover:bg-blue-50">
+                          {t('nav.postJob')}
+                        </Link>
+                      </>
                     )}
-                  </Link>
-                  <Link
-                    to="/wallet"
-                    onClick={() => setProfileOpen(false)}
-                    className="block rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-                  >
-                    Wallet
-                  </Link>
-                  {isHirer && (
-                    <>
-                      <Link
-                        to="/hirer/jobs"
-                        onClick={() => setProfileOpen(false)}
-                        className="block rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-                      >
-                        My Posted Jobs
-                      </Link>
-                      <Link
-                        to="/post-job"
-                        onClick={() => setProfileOpen(false)}
-                        className="block rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-                      >
-                        Post a Job
-                      </Link>
-                    </>
-                  )}
-                  <button
-                    type="button"
-                    onClick={handleSignOut}
-                    className="mt-1 block w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
-                  >
-                    Log out
-                  </button>
+                  </div>
+                  <div className="mt-2 border-t border-slate-100 pt-2">
+                    <button
+                      type="button"
+                      onClick={handleSignOut}
+                      className="w-full flex items-center rounded-xl px-3 py-2 text-left text-sm font-semibold text-red-600 transition hover:bg-red-50"
+                    >
+                      {t('nav.signOut')}
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
           )}
         </div>
 
-        {/* ── Mobile right cluster (visible on mobile & tablet only) ── */}
-        <div className="flex items-center gap-2 lg:hidden">
+        {/* ── Mobile right cluster ── */}
+        <div className="flex items-center gap-3 lg:hidden">
           {isAuthenticated && (
             <>
               {/* Notification icon on mobile */}
@@ -480,25 +518,28 @@ function Header() {
                   setNotificationsOpen(!notificationsOpen);
                   setProfileOpen(false);
                 }}
-                className="relative flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-[#0066FF]/40 hover:text-[#0066FF]"
+                className={`relative flex h-9 w-9 items-center justify-center rounded-full transition-all duration-300 ${scrolled || !isHome
+                  ? "bg-slate-100/80 text-slate-600"
+                  : "bg-white/10 text-white border border-white/20"
+                  }`}
               >
                 <Bell className="h-4 w-4" />
                 {unreadNotificationCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-0.5 text-[9px] font-bold text-white shadow-sm">
+                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white shadow-sm animate-pulse">
                     {unreadNotificationCount > 99 ? "99+" : unreadNotificationCount}
                   </span>
                 )}
               </button>
-              
-              {/* Mobile Notifications Overlay (Simplified version for mobile) */}
+
+              {/* Mobile Notifications Overlay */}
               {notificationsOpen && (
-                <div className="fixed inset-x-4 top-16 z-[200] max-h-[60vh] rounded-2xl border border-slate-200 bg-white shadow-xl flex flex-col">
-                  <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 shrink-0">
-                    <h3 className="font-bold text-slate-700">Notifications</h3>
+                <div className="fixed inset-x-4 top-20 z-[200] max-h-[60vh] rounded-2xl border border-slate-200 bg-white shadow-2xl flex flex-col overflow-hidden">
+                  <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 bg-slate-50/80 shrink-0">
+                    <h3 className="font-bold text-slate-800">Notifications</h3>
                     {unreadNotificationCount > 0 && (
-                      <button 
+                      <button
                         onClick={() => handleMarkAsRead('all')}
-                        className="text-xs text-[#0066FF] font-semibold hover:underline"
+                        className="text-xs text-primary font-semibold"
                       >
                         Mark all as read
                       </button>
@@ -506,14 +547,14 @@ function Header() {
                   </div>
                   <div className="overflow-y-auto p-2 flex flex-col gap-1">
                     {notifications.length === 0 ? (
-                      <div className="py-8 text-center text-sm text-slate-500">
-                        No notifications yet.
+                      <div className="py-10 text-center text-sm font-medium text-slate-400">
+                        No notifications yet
                       </div>
                     ) : (
                       notifications.map((notif) => (
-                        <div 
+                        <div
                           key={notif._id}
-                          className={`flex items-start gap-3 rounded-xl p-3 transition ${notif.read ? 'bg-white' : 'bg-blue-50/50'}`}
+                          className={`flex items-start gap-3 rounded-xl p-3 transition ${notif.read ? 'bg-transparent' : 'bg-blue-50/50'}`}
                           onClick={() => {
                             if (!notif.read) handleMarkAsRead(notif._id);
                             if (notif.link) {
@@ -523,13 +564,13 @@ function Header() {
                           }}
                         >
                           <div className="min-w-0 flex-1">
-                            <p className={`text-sm ${notif.read ? 'font-medium text-slate-700' : 'font-bold text-[#011F50]'}`}>{notif.title}</p>
-                            <p className="text-xs text-slate-500 mt-0.5">{notif.message}</p>
-                            <p className="text-[10px] text-slate-400 mt-1 font-medium">{formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true })}</p>
+                            <p className={`text-sm ${notif.read ? 'font-medium text-slate-600' : 'font-bold text-slate-800'}`}>{notif.title}</p>
+                            <p className="text-xs text-slate-500 mt-1">{notif.message}</p>
+                            <p className="text-[10px] text-slate-400 mt-1.5 font-medium">{formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true })}</p>
                           </div>
                           {!notif.read && (
                             <div className="shrink-0 pt-1 flex items-center">
-                              <div className="h-2 w-2 rounded-full bg-[#0066FF]"></div>
+                              <div className="h-2 w-2 rounded-full bg-primary shadow-sm"></div>
                             </div>
                           )}
                         </div>
@@ -542,12 +583,15 @@ function Header() {
               {/* Chat icon with badge */}
               <Link
                 to="/chat"
-                className="relative flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-[#0066FF]/40 hover:text-[#0066FF]"
+                className={`relative flex h-9 w-9 items-center justify-center rounded-full transition-all duration-300 ${scrolled
+                  ? "bg-slate-100/80 text-slate-600"
+                  : "bg-white/10 text-white border border-white/20"
+                  }`}
                 aria-label={unreadCount > 0 ? `${unreadCount} unread messages` : "Messages"}
               >
                 <MessageSquare className="h-4 w-4" />
                 {unreadCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-0.5 text-[9px] font-bold text-white shadow-sm">
+                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white shadow-sm animate-pulse">
                     {unreadCount > 99 ? "99+" : unreadCount}
                   </span>
                 )}
@@ -569,7 +613,8 @@ function Header() {
 
           {/* Hamburger button */}
           <button
-            className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white p-2 text-[#011F50] shadow-sm transition-colors hover:bg-slate-50"
+            className={`inline-flex items-center justify-center rounded-full p-2 transition-colors ${scrolled ? "bg-slate-100 text-slate-700" : "bg-white/10 text-white border border-white/20"
+              }`}
             type="button"
             onClick={() => setMobileMenuOpen((v) => !v)}
             aria-label="Toggle navigation menu"
@@ -587,27 +632,28 @@ function Header() {
 
       {/* ── Mobile slide-in drawer ── */}
       <div
-        className={`fixed inset-0 z-[100] h-dvh w-screen overflow-hidden bg-slate-950/60 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${
-          mobileMenuOpen ? "opacity-100" : "pointer-events-none opacity-0"
-        }`}
+        className={`fixed inset-0 z-[100] h-dvh w-screen overflow-hidden bg-slate-900/40 backdrop-blur-sm transition-opacity duration-500 lg:hidden ${mobileMenuOpen ? "opacity-100" : "pointer-events-none opacity-0"
+          }`}
         onClick={closeMenu}
         aria-label="Mobile navigation overlay"
       >
         <aside
           id="mobile-menu"
-          className={`absolute inset-y-0 right-0 z-[101] flex h-dvh w-[min(20rem,88vw)] flex-col overflow-y-auto bg-white shadow-2xl transition-transform duration-300 ${
-            mobileMenuOpen ? "translate-x-0" : "translate-x-full"
-          }`}
+          className={`absolute inset-y-0 right-0 z-[101] flex h-dvh w-[min(22rem,90vw)] flex-col overflow-y-auto bg-white shadow-2xl transition-transform duration-500 ease-[cubic-bezier(0.33,1,0.68,1)] ${mobileMenuOpen ? "translate-x-0" : "translate-x-full"
+            }`}
           onClick={(e) => e.stopPropagation()}
           aria-label="Mobile navigation"
         >
           {/* Drawer header */}
-          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-            <Link to="/" onClick={closeMenu}>
-              <img alt="Nirbhor" className="h-9 w-auto object-contain" src={logo1} />
+          <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
+            <Link to="/" onClick={closeMenu} className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#0066FF] to-[#0047b3] shadow-md">
+                <span className="font-bold text-white tracking-tight">N</span>
+              </div>
+              <span className="font-extrabold text-slate-800 text-lg">Nirbhor</span>
             </Link>
             <button
-              className="flex items-center justify-center rounded-full border border-slate-200 p-1.5 text-slate-500 hover:bg-slate-50"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200"
               type="button"
               onClick={closeMenu}
               aria-label="Close menu"
@@ -618,26 +664,26 @@ function Header() {
 
           {/* User info strip (authenticated) */}
           {isAuthenticated && (
-            <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-4">
+            <div className="flex items-center gap-4 px-6 py-5 bg-slate-50/50">
               <UserAvatar user={currentUser} size="lg" imgError={imgError} onError={() => setImgError(true)} />
               <div className="min-w-0">
-                <p className="truncate text-sm font-bold text-[#011F50]">{currentUser?.name}</p>
-                <p className="text-xs text-slate-500">{modeLabel}</p>
+                <p className="truncate text-base font-bold text-slate-800">{currentUser?.name}</p>
+                <p className="text-xs font-semibold text-primary mt-0.5">{modeLabel}</p>
               </div>
             </div>
           )}
 
           {/* Navigation links */}
-          <nav className="flex flex-col gap-1 px-4 py-4">
+          <nav className="flex flex-col gap-1 px-4 py-6">
             {navigationLinks.map((link) => (
               <NavLink
                 key={link.to}
                 className={({ isActive }) =>
                   [
-                    "rounded-xl px-4 py-3 text-sm font-medium transition-colors",
+                    "rounded-xl px-5 py-3.5 text-sm font-semibold transition-all duration-200",
                     isActive
-                      ? "bg-[#0066FF]/10 text-[#0066FF]"
-                      : "text-slate-700 hover:bg-slate-50 hover:text-[#011F50]",
+                      ? "bg-primary/10 text-primary"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
                   ].join(" ")
                 }
                 to={link.to}
@@ -652,11 +698,11 @@ function Header() {
               <Link
                 to="/chat"
                 onClick={closeMenu}
-                className="flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 hover:text-[#011F50]"
+                className="flex items-center justify-between rounded-xl px-5 py-3.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
               >
-                <span>Messages</span>
+                <span>{t('nav.messages')}</span>
                 {unreadCount > 0 && (
-                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#0066FF] px-1 text-[10px] font-bold text-white">
+                  <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-primary px-2 text-[11px] font-bold text-white shadow-sm">
                     {unreadCount > 99 ? "99+" : unreadCount}
                   </span>
                 )}
@@ -665,35 +711,34 @@ function Header() {
           </nav>
 
           {/* Bottom action buttons */}
-          <div className="mt-auto border-t border-slate-100 px-4 pb-8 pt-4 space-y-2.5">
+          <div className="mt-auto border-t border-slate-100 px-6 pb-10 pt-6 space-y-3">
             {!isAuthenticated ? (
               <>
                 <Link
-                  className="block rounded-full border border-slate-300 px-5 py-3 text-center text-sm font-semibold text-slate-700 transition-colors hover:border-[#0066FF] hover:text-[#0066FF]"
+                  className="block rounded-xl border-2 border-slate-200 px-6 py-3.5 text-center text-sm font-bold text-slate-700 transition-colors hover:border-primary hover:text-primary"
                   to="/login"
                   onClick={closeMenu}
                 >
-                  Log In
+                  {t('nav.signIn')}
                 </Link>
                 <Link
-                  className="block rounded-full bg-[#0066FF] px-5 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-[#011F50]"
+                  className="block rounded-xl bg-primary px-6 py-3.5 text-center text-sm font-bold text-white shadow-lg shadow-primary/20 transition-transform hover:scale-[1.02] hover:bg-[#0052cc]"
                   to="/register"
                   onClick={closeMenu}
                 >
-                  Get Started
+                  {t('nav.signUp')}
                 </Link>
               </>
             ) : (
               <>
                 {/* Role switch card */}
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3.5">
-                  <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">Active Mode</p>
+                <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 mb-4">
+                  <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">{t('dashboard.currentMode')}</p>
                   <span
-                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${
-                      (currentUser?.activeMode || currentUser?.role) === "SERVICE_PROVIDER"
-                        ? "bg-amber-100 text-amber-800"
-                        : "bg-blue-100 text-blue-800"
-                    }`}
+                    className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold shadow-sm ${(currentUser?.activeMode || currentUser?.role) === "SERVICE_PROVIDER"
+                      ? "bg-amber-100 text-amber-800"
+                      : "bg-blue-100 text-blue-800"
+                      }`}
                   >
                     {modeLabel}
                   </span>
@@ -701,43 +746,51 @@ function Header() {
                     type="button"
                     onClick={handleRoleSwitch}
                     disabled={switchingRole}
-                    className="mt-2.5 w-full flex items-center justify-center gap-2 rounded-xl bg-white border border-slate-200 px-4 py-2.5 text-xs font-bold text-[#0066FF] shadow-sm transition hover:bg-blue-50 active:scale-[0.98] disabled:opacity-50"
+                    className="mt-4 w-full flex items-center justify-center gap-2 rounded-xl bg-white border border-slate-200 px-5 py-3 text-sm font-bold text-primary shadow-sm transition hover:bg-blue-50 hover:border-blue-200 active:scale-[0.98] disabled:opacity-50"
                   >
-                    {switchingRole ? "Switching..." : switchLabel}
+                    {switchingRole ? t('common.loading') : switchLabel}
                   </button>
                 </div>
 
                 <Link
-                  className="block rounded-xl border border-slate-200 px-5 py-2.5 text-center text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                  className="block rounded-xl border border-slate-200 px-5 py-3 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                   to="/profile"
                   onClick={closeMenu}
                 >
-                  Edit Profile
+                  {t('nav.profile')}
                 </Link>
 
                 <Link
-                  className="block rounded-xl border border-slate-200 px-5 py-2.5 text-center text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                  className="block rounded-xl border border-slate-200 px-5 py-3 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                   to="/wallet"
                   onClick={closeMenu}
                 >
-                  Wallet
+                  {t('nav.wallet')}
+                </Link>
+
+                <Link
+                  className="block rounded-xl border border-slate-200 px-5 py-3 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  to="/transactions"
+                  onClick={closeMenu}
+                >
+                  {t('wallet.transactions')}
                 </Link>
 
                 {isHirer && (
                   <>
                     <Link
-                      className="block rounded-xl border border-slate-200 px-5 py-2.5 text-center text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                      className="block rounded-xl border border-slate-200 px-5 py-3 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                       to="/hirer/jobs"
                       onClick={closeMenu}
                     >
-                      My Posted Jobs
+                      {t('dashboard.myJobs')}
                     </Link>
                     <Link
-                      className="block rounded-full bg-[#0066FF] px-5 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-[#011F50]"
+                      className="block rounded-xl bg-blue-50 px-5 py-3 text-center text-sm font-semibold text-primary transition hover:bg-primary hover:text-white"
                       to="/post-job"
                       onClick={closeMenu}
                     >
-                      Post a Job
+                      {t('nav.postJob')}
                     </Link>
                   </>
                 )}
@@ -745,9 +798,9 @@ function Header() {
                 <button
                   type="button"
                   onClick={handleSignOut}
-                  className="block w-full rounded-full border border-red-200 bg-red-50 px-5 py-2.5 text-center text-sm font-semibold text-red-600 transition hover:bg-red-100"
+                  className="block w-full rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-center text-sm font-bold text-red-600 transition hover:bg-red-100 hover:border-red-300"
                 >
-                  Log out
+                  {t('nav.signOut')}
                 </button>
               </>
             )}

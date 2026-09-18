@@ -3,13 +3,17 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, CheckCircle } from "../components/ui/Icons.jsx";
 import { useAuth } from "../contexts/useAuth.js";
 import { useToast } from "../contexts/ToastContext.jsx";
-
+import { Mail, Lock, User, IdCard, Calendar, Briefcase, Eye, EyeOff } from "lucide-react";
+import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
+import { useTranslation } from "react-i18next";
 function AuthPage() {
   const location = useLocation();
   const isRegister = location.pathname === "/register";
+  useDocumentTitle(isRegister ? "Join Nirbhor" : "Sign In");
   const navigate = useNavigate();
   const { signIn, signUp } = useAuth();
   const { showSuccess, showError } = useToast();
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -19,6 +23,7 @@ function AuthPage() {
     dateOfBirth: "",
   });
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   function updateField(event) {
     setForm((current) => ({
@@ -30,22 +35,25 @@ function AuthPage() {
   async function handleSubmit(event) {
     event.preventDefault();
 
+    if (!/^\S+@\S+\.\S+$/.test(form.email)) {
+      showError(t("auth.invalidEmail"));
+      return;
+    }
+
     if (isRegister) {
       const cleanNid = String(form.nidNumber || "").trim();
       if (!cleanNid || !/^\d{10,17}$/.test(cleanNid)) {
-        showError(
-          "Please enter a valid National ID (NID) number (10 to 17 digits).",
-        );
+        showError(t("auth.invalidNid"));
         return;
       }
       if (!form.dateOfBirth) {
-        showError("Please enter your Date of Birth matching your NID record.");
+        showError(t("auth.invalidDob"));
         return;
       }
 
       const dobRegex = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/;
       if (!dobRegex.test(form.dateOfBirth)) {
-        showError("Please select a valid Date of Birth.");
+        showError(t("auth.invalidDobFormat"));
         return;
       }
     }
@@ -73,8 +81,8 @@ function AuthPage() {
 
       showSuccess(
         isRegister
-          ? "Account created and NID verified successfully."
-          : "Signed in successfully.",
+          ? t("auth.registerSuccess")
+          : t("auth.loginSuccess"),
       );
       navigate(destination, { replace: true });
     } catch (requestError) {
@@ -91,21 +99,21 @@ function AuthPage() {
           to="/"
           className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.15em] text-[#0066FF] hover:text-[#011F50] transition-colors mb-4"
         >
-          <ArrowLeft className="h-4 w-4" /> Go to Home
+          <ArrowLeft className="h-4 w-4" /> {t("common.back")}
         </Link>
         <div>
           <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#0066FF]">
-            {isRegister ? "Join Nirbhor" : "Welcome back"}
+            {isRegister ? t("auth.registerTitle") : t("auth.signInTitle")}
           </span>
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-[#011F50]">
             {isRegister
-              ? "Build trust into every job."
-              : "Your trusted work network."}
+              ? t("auth.registerSubtitle")
+              : t("auth.signInSubtitle")}
           </h1>
           <p className="mt-2 text-sm leading-6 text-slate-500">
             {isRegister
-              ? "Create an account to hire verified professionals or find your next opportunity."
-              : "Sign in to manage your jobs, proposals, and conversations."}
+              ? t("auth.hirerDescription")
+              : t("auth.providerDescription")}
           </p>
         </div>
       </div>
@@ -113,81 +121,110 @@ function AuthPage() {
       <form className="space-y-4" onSubmit={handleSubmit}>
         {isRegister && (
           <label className="grid gap-2 text-sm font-semibold text-slate-700">
-            Full name (matches NID record)
-            <input
-              name="name"
-              value={form.name}
-              onChange={updateField}
-              placeholder="e.g. Rahim Uddin"
-              className="rounded-xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none transition focus:border-[#0066FF] focus:ring-4 focus:ring-[#0066FF]/10"
-              required
-            />
+            {t("auth.fullName")} (matches NID record)
+            <div className="relative group">
+              <input
+                name="name"
+                value={form.name}
+                onChange={updateField}
+                placeholder={t("auth.namePlaceholder")}
+                className="w-full relative z-0 rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 py-3 font-normal outline-none transition focus:border-[#0066FF] focus:ring-4 focus:ring-[#0066FF]/10 focus:bg-white"
+                required
+              />
+              <User className="absolute z-10 left-4 inset-y-0 my-auto h-5 w-5 text-slate-500 group-focus-within:text-[#0066FF] transition-colors pointer-events-none" />
+            </div>
           </label>
         )}
         <label className="grid gap-2 text-sm font-semibold text-slate-700">
-          Email address
-          <input
-            name="email"
-            value={form.email}
-            onChange={updateField}
-            placeholder="user@example.com"
-            className="rounded-xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none transition focus:border-[#0066FF] focus:ring-4 focus:ring-[#0066FF]/10"
-            type="email"
-            autoComplete="email"
-            required
-          />
+          {t("auth.email")}
+          <div className="relative group">
+            <input
+              name="email"
+              value={form.email}
+              onChange={updateField}
+              placeholder={t("auth.emailPlaceholder")}
+              className="w-full relative z-0 rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 py-3 font-normal outline-none transition focus:border-[#0066FF] focus:ring-4 focus:ring-[#0066FF]/10 focus:bg-white"
+              type="email"
+              autoComplete="email"
+              required
+            />
+            <Mail className="absolute z-10 left-4 inset-y-0 my-auto h-5 w-5 text-slate-500 group-focus-within:text-[#0066FF] transition-colors pointer-events-none" />
+          </div>
         </label>
         <label className="grid gap-2 text-sm font-semibold text-slate-700">
-          Password
-          <input
-            name="password"
-            value={form.password}
-            onChange={updateField}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none transition focus:border-[#0066FF] focus:ring-4 focus:ring-[#0066FF]/10"
-            type="password"
-            minLength={8}
-            autoComplete={isRegister ? "new-password" : "current-password"}
-            required
-          />
+          {t("auth.password")}
+          <div className="relative group">
+            <input
+              name="password"
+              value={form.password}
+              onChange={updateField}
+              className="w-full relative z-0 rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-12 py-3 font-normal outline-none transition focus:border-[#0066FF] focus:ring-4 focus:ring-[#0066FF]/10 focus:bg-white"
+              type={showPassword ? "text" : "password"}
+              minLength={8}
+              autoComplete={isRegister ? "new-password" : "current-password"}
+              required
+            />
+            <Lock className="absolute z-10 left-4 inset-y-0 my-auto h-5 w-5 text-slate-500 group-focus-within:text-[#0066FF] transition-colors pointer-events-none" />
+            <button
+              type="button"
+              className="absolute z-10 right-4 inset-y-0 my-auto flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
+              onClick={() => setShowPassword((prev) => !prev)}
+            >
+              {showPassword ? (
+                <EyeOff className="h-5 w-5" />
+              ) : (
+                <Eye className="h-5 w-5" />
+              )}
+            </button>
+          </div>
         </label>
         {isRegister && (
           <>
             <label className="grid gap-2 text-sm font-semibold text-slate-700">
-              National ID (NID) Number
-              <input
-                name="nidNumber"
-                value={form.nidNumber}
-                onChange={updateField}
-                placeholder="e.g. 1234567890"
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none transition focus:border-[#0066FF] focus:ring-4 focus:ring-[#0066FF]/10"
-                required
-              />
+              {t("auth.nidNumber")}
+              <div className="relative group">
+                <input
+                  name="nidNumber"
+                  value={form.nidNumber}
+                  onChange={updateField}
+                  placeholder={t("auth.nidPlaceholder")}
+                  className="w-full relative z-0 rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 py-3 font-normal outline-none transition focus:border-[#0066FF] focus:ring-4 focus:ring-[#0066FF]/10 focus:bg-white"
+                  required
+                />
+                <IdCard className="absolute z-10 left-4 inset-y-0 my-auto h-5 w-5 text-slate-500 group-focus-within:text-[#0066FF] transition-colors pointer-events-none" />
+              </div>
               <span className="text-xs text-slate-400 font-normal">
-                10 to 17 digit Bangladesh National ID
+                {t("auth.invalidNid")}
               </span>
             </label>
             <label className="grid gap-2 text-sm font-semibold text-slate-700">
-              Date of Birth (matches NID)
-              <input
-                name="dateOfBirth"
-                type="date"
-                value={form.dateOfBirth}
-                onChange={updateField}
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none transition focus:border-[#0066FF] focus:ring-4 focus:ring-[#0066FF]/10"
-                required
-              />
+              {t("auth.dateOfBirth")} (matches NID)
+              <div className="relative group">
+                <input
+                  name="dateOfBirth"
+                  type="date"
+                  value={form.dateOfBirth}
+                  onChange={updateField}
+                  className="w-full relative z-0 rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 py-3 font-normal outline-none transition focus:border-[#0066FF] focus:ring-4 focus:ring-[#0066FF]/10 focus:bg-white"
+                  required
+                />
+                <Calendar className="absolute z-10 left-4 inset-y-0 my-auto h-5 w-5 text-slate-500 group-focus-within:text-[#0066FF] transition-colors pointer-events-none" />
+              </div>
             </label>
             <label className="grid gap-2 text-sm font-semibold text-slate-700">
-              I am joining as
-              <select
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none focus:border-[#0066FF]"
-                name="role"
-                value={form.role}
-                onChange={updateField}
-              >
-                <option value="HIRER">Hirer</option>
-                <option value="SERVICE_PROVIDER">Service Provider</option>
-              </select>
+              {t("auth.role")}
+              <div className="relative group">
+                <select
+                  className="w-full relative z-0 rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 py-3 font-normal outline-none transition focus:border-[#0066FF] focus:ring-4 focus:ring-[#0066FF]/10 focus:bg-white appearance-none"
+                  name="role"
+                  value={form.role}
+                  onChange={updateField}
+                >
+                  <option value="HIRER">{t("auth.roleHirer")}</option>
+                  <option value="SERVICE_PROVIDER">{t("auth.roleProvider")}</option>
+                </select>
+                <Briefcase className="absolute z-10 left-4 inset-y-0 my-auto h-5 w-5 text-slate-500 group-focus-within:text-[#0066FF] transition-colors pointer-events-none" />
+              </div>
             </label>
           </>
         )}
@@ -196,10 +233,10 @@ function AuthPage() {
           type="submit"
         >
           {submitting
-            ? "Working..."
+            ? t("common.loading")
             : isRegister
-              ? "Create account"
-              : "Sign in"}
+              ? t("auth.registerButton")
+              : t("auth.signInButton")}
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
         </button>
       </form>
@@ -209,19 +246,19 @@ function AuthPage() {
           className="block text-sm font-semibold text-[#0066FF] hover:text-[#011F50]"
           to="/forgot-password"
         >
-          Forgot your password?
+          {t("auth.forgotPassword")}
         </Link>
       )}
 
       <div className="flex items-center gap-3 text-sm text-slate-500">
         <span>
-          {isRegister ? "Already have an account?" : "New to Nirbhor?"}
+          {isRegister ? t("auth.haveAccount") : t("auth.noAccount")}
         </span>
         <Link
           className="font-bold text-[#0066FF] hover:text-[#011F50]"
           to={isRegister ? "/login" : "/register"}
         >
-          {isRegister ? "Sign in" : "Get started"}
+          {isRegister ? t("auth.signInLink") : t("auth.signUpLink")}
         </Link>
       </div>
 

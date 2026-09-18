@@ -1,8 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getAdminMetrics } from "../../services/adminApi.js";
+import { useDocumentTitle } from "../../hooks/useDocumentTitle.js";
+
+function fmtDate(date) {
+  if (!date) return "—";
+  return new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
 
 export function AdminOverviewPage() {
+  useDocumentTitle("Admin  Overview");
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -19,7 +26,7 @@ export function AdminOverviewPage() {
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-700 border-t-[#0066FF]" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-300 dark:border-slate-700 border-t-[#0066FF]" />
       </div>
     );
   }
@@ -39,44 +46,44 @@ export function AdminOverviewPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-extrabold text-white">System Overview</h1>
-        <p className="mt-1 text-xs text-slate-400">
+        <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">System Overview</h1>
+        <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
           Real-time metrics, platform revenue from 5% commission, and recent activity
         </p>
       </div>
 
       {/* KPI Cards Grid */}
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-lg">
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 p-5 shadow-lg">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Total Users
             </span>
             <span className="text-xl">👥</span>
           </div>
-          <div className="mt-3 text-3xl font-extrabold text-white">{stats.totalUsers || 0}</div>
+          <div className="mt-3 text-3xl font-extrabold text-slate-900 dark:text-white">{stats.totalUsers || 0}</div>
           <div className="mt-1 text-[11px] text-emerald-400 font-semibold">
             {stats.nidVerificationRate || 0}% NID Verified
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-lg">
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 p-5 shadow-lg">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Active Jobs
             </span>
             <span className="text-xl">💼</span>
           </div>
-          <div className="mt-3 text-3xl font-extrabold text-white">{stats.activeJobs || 0}</div>
-          <div className="mt-1 text-[11px] text-slate-400">
+          <div className="mt-3 text-3xl font-extrabold text-slate-900 dark:text-white">{stats.activeJobs || 0}</div>
+          <div className="mt-1 text-[11px] text-slate-600 dark:text-slate-400">
             Out of {stats.totalJobs || 0} total requests
           </div>
         </div>
 
         {stats.totalPlatformCommission !== undefined && (
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-lg">
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 p-5 shadow-lg">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                 Platform Revenue (5%)
               </span>
               <span className="text-xl">💰</span>
@@ -84,15 +91,15 @@ export function AdminOverviewPage() {
             <div className="mt-3 text-3xl font-extrabold text-emerald-400">
               ৳{Number(stats.totalPlatformCommission || 0).toLocaleString()}
             </div>
-            <div className="mt-1 text-[11px] text-slate-400">
+            <div className="mt-1 text-[11px] text-slate-600 dark:text-slate-400">
               Gross Volume: ৳{Number(stats.totalGrossPaymentVolume || 0).toLocaleString()}
             </div>
           </div>
         )}
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-lg">
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 p-5 shadow-lg">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Pending Actions
             </span>
             <span className="text-xl">⚠️</span>
@@ -105,17 +112,16 @@ export function AdminOverviewPage() {
               {stats.openDisputes || 0} Disputes
             </span>
           </div>
-          <div className="mt-1 text-[11px] text-slate-400">Requires administrative review</div>
+          <div className="mt-1 text-[11px] text-slate-600 dark:text-slate-400">Requires administrative review</div>
         </div>
       </div>
 
       {/* Tables Row */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Recent Registered Users */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-6 shadow-lg">
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 p-6 shadow-lg">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-300">
-              Recent Users
+            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Recent Registrations
             </h2>
             <Link to="/admin/users" className="text-xs font-bold text-[#0066FF] hover:underline">
               View All →
@@ -124,17 +130,18 @@ export function AdminOverviewPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-slate-800 text-slate-500 uppercase tracking-wider">
+                <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   <th className="pb-2">Name</th>
                   <th className="pb-2">Role</th>
                   <th className="pb-2">NID Status</th>
+                  <th className="pb-2 hidden sm:table-cell">Joined</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
                 {recentUsers.map((u) => (
                   <tr key={u._id || u.email}>
-                    <td className="py-2.5 font-semibold text-white">{u.name}</td>
-                    <td className="py-2.5 text-slate-400">{u.activeMode || u.role}</td>
+                    <td className="py-2.5 font-semibold text-slate-900 dark:text-white">{u.name}</td>
+                    <td className="py-2.5 text-slate-600 dark:text-slate-400">{u.activeMode || u.role}</td>
                     <td className="py-2.5">
                       <span
                         className={`rounded px-2 py-0.5 text-[10px] font-bold ${
@@ -146,6 +153,7 @@ export function AdminOverviewPage() {
                         {u.nidVerified ? "VERIFIED" : "UNVERIFIED"}
                       </span>
                     </td>
+                    <td className="py-2.5 text-slate-500 dark:text-slate-400 hidden sm:table-cell">{fmtDate(u.createdAt)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -154,9 +162,9 @@ export function AdminOverviewPage() {
         </div>
 
         {/* Recent Job Posts */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-6 shadow-lg">
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 p-6 shadow-lg">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-300">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
               Recent Job Posts
             </h2>
             <Link to="/admin/jobs" className="text-xs font-bold text-[#0066FF] hover:underline">
@@ -166,19 +174,19 @@ export function AdminOverviewPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-slate-800 text-slate-500 uppercase tracking-wider">
+                <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   <th className="pb-2">Title</th>
                   <th className="pb-2">Category</th>
                   <th className="pb-2">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
                 {recentJobs.map((j) => (
                   <tr key={j._id || j.title}>
-                    <td className="py-2.5 font-semibold text-white truncate max-w-[150px]">
+                    <td className="py-2.5 font-semibold text-slate-900 dark:text-white truncate max-w-[150px]">
                       {j.title}
                     </td>
-                    <td className="py-2.5 text-slate-400">{j.category}</td>
+                    <td className="py-2.5 text-slate-600 dark:text-slate-400">{j.category}</td>
                     <td className="py-2.5">
                       <span className="rounded bg-blue-500/20 px-2 py-0.5 text-[10px] font-bold text-blue-300">
                         {j.status}

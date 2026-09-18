@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/useAuth.js";
 import { updateProfile, uploadAvatar, changePassword, getUserReviews } from "../services/api.js";
+import { useTranslation } from "react-i18next";
 import { useToast } from "../contexts/ToastContext.jsx";
-import { Lock, EyeOff, Eye, Star } from "../components/ui/Icons.jsx";
+import { Lock, EyeOff, Eye, Star, CheckCircle } from "../components/ui/Icons.jsx";
 import { locations } from "../data/locations.js";
+import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 
 // Removed hardcoded categories
 
@@ -15,7 +17,9 @@ const initialProfile = {
   location: { division: "", district: "", thana: "", road: "" },
   category: "",
   hourlyRate: "",
-  workingHours: "Flexible",
+  workingHoursStart: "09:00",
+  workingHoursEnd: "18:00",
+  workingHours: "09:00 AM - 06:00 PM",
   availableNow: false,
   bio: "",
   skills: "",
@@ -36,6 +40,8 @@ function getInitials(name) {
 }
 
 function ProfilePage() {
+  const { t } = useTranslation();
+  useDocumentTitle(t("profile.title", "Profile Setup"));
   const navigate = useNavigate();
   const { currentUser, updateSession, isAuthenticated } = useAuth();
   const { showSuccess, showError } = useToast();
@@ -61,6 +67,65 @@ function ProfilePage() {
     [currentUser],
   );
 
+  const renderTimeSelectors = (fieldName, timeValue) => {
+    const [hStr, mStr] = (timeValue || "09:00").split(":");
+    let hour24 = parseInt(hStr, 10) || 0;
+    const ampm = hour24 >= 12 ? "PM" : "AM";
+    let hour12 = hour24 % 12;
+    if (hour12 === 0) hour12 = 12;
+
+    return (
+      <div className="flex items-center gap-1">
+        <select
+          value={String(hour12).padStart(2, "0")}
+          onChange={(e) => {
+            let newH = parseInt(e.target.value, 10);
+            if (ampm === "PM" && newH !== 12) newH += 12;
+            if (ampm === "AM" && newH === 12) newH = 0;
+            updateField({
+              target: { name: fieldName, value: `${String(newH).padStart(2, "0")}:${mStr}` },
+            });
+          }}
+          className="rounded-xl border border-slate-200 bg-slate-50 px-2 py-3 font-normal outline-none transition focus:border-[#0066FF] focus:ring-2 focus:ring-[#0066FF]/20 text-sm"
+        >
+          {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, "0")).map((hr) => (
+            <option key={hr} value={hr}>{hr}</option>
+          ))}
+        </select>
+        <span className="text-slate-400 font-bold">:</span>
+        <select
+          value={mStr}
+          onChange={(e) => {
+            updateField({
+              target: { name: fieldName, value: `${String(hour24).padStart(2, "0")}:${e.target.value}` },
+            });
+          }}
+          className="rounded-xl border border-slate-200 bg-slate-50 px-2 py-3 font-normal outline-none transition focus:border-[#0066FF] focus:ring-2 focus:ring-[#0066FF]/20 text-sm"
+        >
+          {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0")).map((m) => (
+            <option key={m} value={m}>{m}</option>
+          ))}
+        </select>
+        <select
+          value={ampm}
+          onChange={(e) => {
+            let newH = hour24;
+            const newAmpm = e.target.value;
+            if (newAmpm === "PM" && newH < 12) newH += 12;
+            if (newAmpm === "AM" && newH >= 12) newH -= 12;
+            updateField({
+              target: { name: fieldName, value: `${String(newH).padStart(2, "0")}:${mStr}` },
+            });
+          }}
+          className="rounded-xl border border-slate-200 bg-slate-50 px-2 py-3 font-bold outline-none transition focus:border-[#0066FF] focus:ring-2 focus:ring-[#0066FF]/20 text-sm"
+        >
+          <option value="AM">AM</option>
+          <option value="PM">PM</option>
+        </select>
+      </div>
+    );
+  };
+
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login", { replace: true });
@@ -75,14 +140,39 @@ function ProfilePage() {
       }).catch(console.error);
     });
 
+    let startTime = "09:00";
+    let endTime = "18:00";
+
+    if (currentUser.profile?.workingHours && currentUser.profile.workingHours.includes("-")) {
+      const parts = currentUser.profile.workingHours.split("-").map(s => s.trim());
+      if (parts.length === 2) {
+        const parseTime = (tStr) => {
+          const match = tStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+          if (match) {
+            let h = parseInt(match[1], 10);
+            const m = match[2];
+            const ampm = match[3].toUpperCase();
+            if (ampm === "PM" && h < 12) h += 12;
+            if (ampm === "AM" && h === 12) h = 0;
+            return `${String(h).padStart(2, '0')}:${m}`;
+          }
+          return tStr;
+        };
+        startTime = parseTime(parts[0]);
+        endTime = parseTime(parts[1]);
+      }
+    }
+
     setForm({
       name: currentUser.name || "",
       email: currentUser.email || "",
-      phone: currentUser.phone || "",
+      phone: currentUser.phone ? currentUser.phone.replace("+880", "") : "",
       location: currentUser.location || { division: "", district: "", thana: "", road: "" },
       category: currentUser.profile?.category || "",
       hourlyRate: currentUser.profile?.hourlyRate?.toString() || "",
-      workingHours: currentUser.profile?.workingHours || "Flexible",
+      workingHoursStart: startTime,
+      workingHoursEnd: endTime,
+      workingHours: currentUser.profile?.workingHours || "09:00 AM - 06:00 PM",
       availableNow: Boolean(currentUser.profile?.availableNow),
       bio: currentUser.profile?.bio || "",
       skills: (currentUser.profile?.skills || []).join(", "),
@@ -204,12 +294,31 @@ function ProfilePage() {
     event.preventDefault();
     if (!currentUser) return;
 
+    if (!/^\S+@\S+\.\S+$/.test(form.email)) {
+      showError("Please enter a valid email address.");
+      return;
+    }
+    if (form.phone && !/^\d{10}$/.test(form.phone)) {
+      showError("Phone number must contain exactly 10 digits after +880.");
+      return;
+    }
+
     setSaving(true);
     try {
+      const formatTime = (timeStr) => {
+        if (!timeStr) return "";
+        const [hStr, mStr] = timeStr.split(":");
+        let h = parseInt(hStr, 10);
+        const ampm = h >= 12 ? "PM" : "AM";
+        if (h > 12) h -= 12;
+        if (h === 0) h = 12;
+        return `${String(h).padStart(2, '0')}:${mStr} ${ampm}`;
+      };
+
       const payload = {
         name: form.name,
         email: form.email,
-        phone: form.phone,
+        phone: form.phone ? `+880${form.phone}` : "",
         location: form.location,
         avatar: form.avatar || undefined,
         bio: form.bio,
@@ -218,7 +327,7 @@ function ProfilePage() {
       if (isWorker) {
         payload.category = form.category;
         payload.hourlyRate = Number(form.hourlyRate || 0);
-        payload.workingHours = form.workingHours;
+        payload.workingHours = `${formatTime(form.workingHoursStart)} - ${formatTime(form.workingHoursEnd)}`;
         payload.availableNow = form.availableNow;
         payload.skills = form.skills
           .split(",")
@@ -265,8 +374,13 @@ function ProfilePage() {
   }
 
   return (
-    <div className="mx-auto w-11/12 max-w-5xl py-10 lg:w-10/12">
-      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+    <main className="min-h-[100dvh] bg-gradient-to-br from-slate-50 via-white to-blue-50/30 pt-24 pb-12 relative overflow-hidden">
+      {/* Decorative Blur Orbs */}
+      <div className="pointer-events-none absolute left-0 top-0 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#0066FF]/10 blur-[120px]" />
+      <div className="pointer-events-none absolute right-0 bottom-0 h-[30rem] w-[30rem] translate-x-1/3 translate-y-1/3 rounded-full bg-[#0066FF]/5 blur-[120px]" />
+
+      <div className="mx-auto max-w-5xl px-4 md:px-6 relative z-10">
+        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#0066FF]">
             Profile Settings ({isWorker ? "Service Provider" : "Hirer"} Mode)
@@ -281,7 +395,8 @@ function ProfilePage() {
         onSubmit={handleSubmit}
         className="grid gap-6 lg:grid-cols-[1.1fr_2fr]"
       >
-        <aside className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <aside className="rounded-3xl border border-white/50 bg-white/60 backdrop-blur-xl p-8 shadow-[0_8px_32px_rgba(0,0,0,0.03)] transition-all duration-300 hover:shadow-[0_8px_32px_rgba(0,0,0,0.06)] relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent pointer-events-none" />
           <div className="flex flex-col items-center text-center">
             {form.avatar && !imgError ? (
               <img
@@ -301,38 +416,67 @@ function ProfilePage() {
             <p className="mt-1 inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
               {isWorker ? "🛠️ Service Provider" : "💼 Hirer"}
             </p>
+
+            <div className="mt-6 flex gap-4 w-full justify-center">
+              <div className="flex flex-col items-center p-3 rounded-2xl bg-white/50 border border-slate-100 shadow-sm backdrop-blur-sm w-1/2">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Hirer Rating</span>
+                <div className="flex items-center gap-1.5 text-amber-500 mt-1">
+                  <Star className="h-5 w-5 fill-amber-500" />
+                  <span className="text-lg font-bold text-slate-700">
+                    {currentUser?.profile?.hirerRating > 0 ? currentUser.profile.hirerRating.toFixed(1) : "New"}
+                  </span>
+                </div>
+                <span className="text-xs text-slate-400 mt-0.5">{currentUser?.profile?.hirerReviews || 0} reviews</span>
+              </div>
+              <div className="flex flex-col items-center p-3 rounded-2xl bg-white/50 border border-slate-100 shadow-sm backdrop-blur-sm w-1/2">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Provider Rating</span>
+                <div className="flex items-center gap-1.5 text-amber-500 mt-1">
+                  <Star className="h-5 w-5 fill-amber-500" />
+                  <span className="text-lg font-bold text-slate-700">
+                    {currentUser?.profile?.providerRating > 0 ? currentUser.profile.providerRating.toFixed(1) : "New"}
+                  </span>
+                </div>
+                <span className="text-xs text-slate-400 mt-0.5">{currentUser?.profile?.providerReviews || 0} reviews</span>
+              </div>
+            </div>
           </div>
 
           <label className="mt-6 block text-sm font-medium text-slate-700">
-            Profile Picture
+            {t("profile.avatar", "Profile Picture")}
             <div
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              className={`mt-2 rounded-xl border-2 border-dashed p-6 text-center transition ${
+              className={`mt-2 rounded-2xl border-2 border-dashed p-6 text-center transition-all duration-300 backdrop-blur-sm ${
                 dragActive
-                  ? "border-[#0066FF] bg-[#0066FF]/5"
-                  : "border-slate-200 bg-slate-50"
+                  ? "border-[#0066FF] bg-[#0066FF]/10 scale-[1.02]"
+                  : "border-slate-300 bg-white/40 hover:bg-white/60 hover:border-slate-400"
               }`}
             >
               <input
                 type="file"
-                accept="image/*"
+                accept="image/jpeg, image/png, image/webp"
                 onChange={handleFileInputChange}
                 className="hidden"
                 id="avatar-upload"
               />
               <label
                 htmlFor="avatar-upload"
-                className="cursor-pointer text-sm text-slate-600"
+                className="cursor-pointer text-sm text-slate-600 flex flex-col items-center gap-2"
               >
-                <p className="font-medium text-[#0066FF]">
+                <div className="w-12 h-12 rounded-full bg-[#0066FF]/10 flex items-center justify-center text-[#0066FF] transition-transform hover:scale-110">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <p className="font-semibold text-[#0066FF]">
                   {uploadingAvatar
                     ? "Uploading image..."
                     : "Click to upload or drag and drop"}
                 </p>
-                <p className="text-xs text-slate-500 mt-1">
-                  PNG, JPG, GIF up to 5MB
+                <p className="text-xs text-slate-500 font-medium">
+                  PNG, JPG, WebP up to 5MB
                 </p>
               </label>
             </div>
@@ -344,25 +488,32 @@ function ProfilePage() {
           </label>
         </aside>
 
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-3xl border border-white/50 bg-white/60 backdrop-blur-xl p-8 shadow-[0_8px_32px_rgba(0,0,0,0.03)] transition-all duration-300 hover:shadow-[0_8px_32px_rgba(0,0,0,0.06)] relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent pointer-events-none" />
           <h3 className="mb-4 text-lg font-bold text-[#011F50] border-b border-slate-100 pb-3">
-            General Information
+            {t("profile.personalInfo", "Personal Information")}
           </h3>
 
           <div className="grid gap-5 md:grid-cols-2">
             <label className="grid gap-2 text-sm font-semibold text-slate-700">
-              Full name
+              <div className="flex items-center gap-2">
+                {t("profile.fullName", "Full name")}
+                {currentUser?.nidVerified && (
+                  <span title={t("profile.nameLocked")} className="text-green-500 bg-green-50 p-1 rounded-full"><CheckCircle className="w-4 h-4" /></span>
+                )}
+              </div>
               <input
                 name="name"
                 value={form.name}
                 onChange={updateField}
-                className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 font-normal outline-none transition focus:border-[#0066FF] focus:ring-4 focus:ring-[#0066FF]/10"
+                disabled={currentUser?.nidVerified}
+                className={`rounded-xl border bg-slate-50 px-4 py-3 font-normal outline-none transition ${currentUser?.nidVerified ? "border-slate-100 text-slate-400 cursor-not-allowed" : "border-slate-200 focus:border-[#0066FF] focus:ring-4 focus:ring-[#0066FF]/10"}`}
                 required
               />
             </label>
 
             <label className="grid gap-2 text-sm font-semibold text-slate-700">
-              Email
+              {t("profile.email", "Email")}
               <input
                 type="email"
                 name="email"
@@ -375,12 +526,22 @@ function ProfilePage() {
 
             <label className="grid gap-2 text-sm font-semibold text-slate-700">
               Phone number
-              <input
-                name="phone"
-                value={form.phone}
-                onChange={updateField}
-                className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 font-normal outline-none transition focus:border-[#0066FF] focus:ring-4 focus:ring-[#0066FF]/10"
-              />
+              <div className="flex overflow-hidden rounded-xl border border-slate-200 bg-slate-50 transition-within focus-within:border-[#0066FF] focus-within:ring-4 focus-within:ring-[#0066FF]/10">
+                <span className="flex items-center bg-slate-100 px-4 text-slate-500 font-medium border-r border-slate-200 select-none">
+                  +880
+                </span>
+                <input
+                  name="phone"
+                  value={form.phone}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, "").slice(0, 10);
+                    setForm(cur => ({ ...cur, phone: value }));
+                  }}
+                  className="w-full px-4 py-3 font-normal outline-none bg-transparent"
+                  placeholder="17XXXXXXXX"
+                  maxLength={10}
+                />
+              </div>
             </label>
 
             <label className="grid gap-2 text-sm font-semibold text-slate-700">
@@ -454,7 +615,7 @@ function ProfilePage() {
 
           {/* Service Provider Specific Configuration Options */}
           {isWorker ? (
-            <div className="mt-8 border-t border-slate-100 pt-6">
+            <div className="mt-8 border-t border-slate-100 pt-6 relative z-10">
               <h3 className="mb-4 text-lg font-bold text-[#011F50] border-b border-slate-100 pb-3">
                 Service Provider Settings
               </h3>
@@ -490,16 +651,14 @@ function ProfilePage() {
                   />
                 </label>
 
-                <label className="grid gap-2 text-sm font-semibold text-slate-700">
+                <div className="grid gap-2 text-sm font-semibold text-slate-700">
                   Working hours
-                  <input
-                    name="workingHours"
-                    value={form.workingHours}
-                    onChange={updateField}
-                    className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 font-normal outline-none transition focus:border-[#0066FF] focus:ring-4 focus:ring-[#0066FF]/10"
-                    placeholder="e.g. 9:00 AM - 6:00 PM"
-                  />
-                </label>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {renderTimeSelectors("workingHoursStart", form.workingHoursStart)}
+                    <span className="text-slate-400 font-bold px-1">to</span>
+                    {renderTimeSelectors("workingHoursEnd", form.workingHoursEnd)}
+                  </div>
+                </div>
 
                 <div className="flex items-center gap-3 pt-6">
                   <input
@@ -703,14 +862,15 @@ function ProfilePage() {
             <button
               type="submit"
               disabled={saving}
-              className="rounded-xl bg-[#0066FF] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-[#0066FF]/20 transition hover:bg-[#011F50] disabled:cursor-not-allowed disabled:opacity-70"
+              className="rounded-xl bg-[#0066FF] px-8 py-3.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(0,102,255,0.25)] transition-all duration-300 hover:bg-[#0052cc] hover:shadow-[0_12px_24px_rgba(0,102,255,0.35)] hover:-translate-y-0.5 focus:ring-4 focus:ring-[#0066FF]/20 disabled:opacity-70 mt-6 md:mt-0"
             >
               {saving ? "Saving..." : "Save profile"}
             </button>
           </div>
         </div>
       </form>
-    </div>
+      </div>
+    </main>
   );
 }
 

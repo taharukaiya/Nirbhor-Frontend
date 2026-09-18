@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "../contexts/useAuth.js";
 import { useToast } from "../contexts/ToastContext.jsx";
 import {
@@ -30,7 +30,9 @@ import {
   MoreVertical,
   X,
 } from "../components/ui/Icons.jsx";
-import { UserProfileModal } from "../components/UserProfileModal.jsx";
+import { Mic, Square } from "lucide-react";
+
+import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 
 /* ── Helpers ──────────────────────────────────────────────── */
 
@@ -118,7 +120,7 @@ function ReportModal({ chatId, message, onClose }) {
             <p className="mb-2 text-sm font-semibold text-slate-700">Why are you reporting this?</p>
             <div className="space-y-2">
               {REPORT_REASONS.map((r) => (
-                <label key={r.value} className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 px-3 py-2.5 transition has-[:checked]:border-[#0066FF] has-[:checked]:bg-[#0066FF]/5">
+                <label key={r.value} className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 px-3 py-2.5 transition has-[:checked]:border-primary has-[:checked]:bg-primary/5">
                   <input
                     type="radio"
                     name="report-reason"
@@ -156,6 +158,29 @@ function ReportModal({ chatId, message, onClose }) {
 }
 
 /* ── MessageBubble ────────────────────────────────────────── */
+
+function formatChatTimestamp(dateString) {
+  const date = new Date(dateString || Date.now());
+  const now = new Date();
+  const isToday = date.getDate() === now.getDate() && date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+
+  const timeString = date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+
+  if (isToday) {
+    return timeString;
+  }
+
+  const dateStringFormatted = date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+
+  return `${dateStringFormatted}, ${timeString}`;
+}
 
 function MessageBubble({ msg, isMe, activeChatId, onReport }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -207,24 +232,19 @@ function MessageBubble({ msg, isMe, activeChatId, onReport }) {
 
       {/* Bubble */}
       <div
-        className={`max-w-md rounded-2xl px-4 py-3 shadow-sm ${
+        className={`max-w-[75%] px-4 py-2.5 shadow-sm ${
           isMe
-            ? "bg-[#0066FF] text-white rounded-br-none"
-            : "bg-white text-slate-800 border border-slate-200/80 rounded-bl-none"
+            ? "bg-[#0084FF] text-white rounded-[20px] rounded-br-[4px]"
+            : "bg-[#E4E6EB] text-black rounded-[20px] rounded-bl-[4px]"
         }`}
       >
-        <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.body}</p>
+        <p className="text-[15px] leading-snug whitespace-pre-wrap">{msg.body}</p>
         <div
-          className={`mt-1.5 flex items-center justify-end gap-1 text-[10px] ${
-            isMe ? "text-blue-100" : "text-slate-400"
+          className={`mt-1 flex items-center justify-end gap-1 text-[11px] ${
+            isMe ? "text-blue-100/90" : "text-slate-500"
           }`}
         >
-          <span>
-            {new Date(msg.createdAt || Date.now()).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </span>
+          <span>{formatChatTimestamp(msg.createdAt)}</span>
           <ReadReceipt isMe={isMe} readAt={msg.readAt} />
         </div>
       </div>
@@ -235,6 +255,7 @@ function MessageBubble({ msg, isMe, activeChatId, onReport }) {
 /* ── ChatPage ─────────────────────────────────────────────── */
 
 function ChatPage() {
+  useDocumentTitle("Chat");
   const { jobId, proposalId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const chatIdFromQuery = searchParams.get("chatId");
@@ -256,13 +277,15 @@ function ChatPage() {
   const [mobileShowChat, setMobileShowChat] = useState(false);
 
   // Profile quick-view
-  const [viewingParticipantId, setViewingParticipantId] = useState(null);
+
 
   // Report modal state
   const [reportingMessage, setReportingMessage] = useState(null);
 
   const messagesContainerRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+
+
 
   // Initialize socket on mount
   useEffect(() => {
@@ -360,16 +383,22 @@ function ChatPage() {
   // Listen for socket events
   useEffect(() => {
     const unsubMessage = onNewMessage((msg) => {
-      setMessages((prev) => {
-        // Avoid duplicates
-        if (prev.some((m) => m._id && m._id === msg._id)) return prev;
-        return [...prev, msg];
-      });
+      const msgChatId = msg.chatId || msg.chat;
+
+      // Only append message if it belongs to the currently active chat
+      if (msgChatId === activeChatId) {
+        setMessages((prev) => {
+          // Avoid duplicates
+          if (prev.some((m) => m._id && m._id === msg._id)) return prev;
+          return [...prev, msg];
+        });
+        markChatRead(activeChatId);
+      }
 
       // Update conversations lastMessage in list
       setConversations((prev) =>
         prev.map((conv) => {
-          if ((conv.id || conv.chatId) === activeChatId) {
+          if ((conv.id || conv.chatId) === msgChatId) {
             return {
               ...conv,
               lastMessage: {
@@ -378,15 +407,11 @@ function ChatPage() {
                 createdAt: msg.createdAt,
               },
               updatedAt: msg.createdAt,
-              unreadCount: 0, // we're viewing this chat
+              unreadCount: msgChatId === activeChatId ? 0 : (conv.unreadCount || 0) + 1,
             };
           }
-          // Increment unread for other chats
-          if ((conv.id || conv.chatId) === (msg.chatId || msg.chat)) {
-            return { ...conv, unreadCount: (conv.unreadCount || 0) + 1 };
-          }
           return conv;
-        }),
+        }).sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0))
       );
     });
 
@@ -405,8 +430,10 @@ function ChatPage() {
       if (chatId === activeChatId) {
         setMessages((prev) =>
           prev.map((m) => {
-            const senderId = m.sender?._id || m.sender;
-            if (senderId === currentUser?.id && !m.readAt) {
+            const msgSenderId = String(
+              (m.sender && typeof m.sender === "object" ? m.sender._id : m.sender) ?? ""
+            );
+            if (msgSenderId === String(currentUser?.id ?? "") && !m.readAt) {
               return { ...m, readAt };
             }
             return m;
@@ -483,10 +510,15 @@ function ChatPage() {
   }, [conversations, searchQuery]);
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-4rem)] w-full max-w-7xl overflow-hidden bg-slate-50">
+    <div className="min-h-[100dvh] bg-gradient-to-br from-slate-50 via-white to-blue-50/30 pt-24 pb-6 px-4 md:px-6 relative overflow-hidden flex flex-col">
+      {/* Decorative Blur Orbs */}
+      <div className="pointer-events-none absolute left-0 top-20 h-96 w-96 -translate-x-1/2 rounded-full bg-primary/10 blur-[120px]" />
+      <div className="pointer-events-none absolute right-0 bottom-0 h-[30rem] w-[30rem] translate-x-1/3 translate-y-1/3 rounded-full bg-primary/5 blur-[120px]" />
+
+      <div className="mx-auto flex h-[calc(100vh-8rem)] w-full max-w-7xl overflow-hidden rounded-3xl border border-white/50 bg-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.03)] backdrop-blur-xl relative z-10">
       {/* ── Sidebar / Conversations List ── */}
       <aside
-        className={`flex w-full flex-col border-r border-slate-200 bg-white md:w-80 lg:w-96 ${
+        className={`flex w-full flex-col border-r border-slate-100/50 bg-white/40 md:w-80 lg:w-96 ${
           mobileShowChat ? "hidden md:flex" : "flex"
         }`}
       >
@@ -500,7 +532,7 @@ function ChatPage() {
               placeholder="Search conversations..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-4 text-sm outline-none focus:border-[#0066FF] focus:bg-white focus:ring-2 focus:ring-[#0066FF]/10"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-4 text-sm outline-none focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/10"
             />
           </div>
         </div>
@@ -531,22 +563,28 @@ function ChatPage() {
                   onClick={() => handleSelectConversation(conv)}
                   className={`flex cursor-pointer items-start gap-3 p-4 transition ${
                     isActive
-                      ? "bg-[#0066FF]/5 border-l-4 border-l-[#0066FF]"
+                      ? "bg-primary/5 border-l-4 border-l-[#0066FF]"
                       : "hover:bg-slate-50"
                   }`}
                 >
                   {/* Avatar */}
-                  {p.avatar ? (
-                    <img
-                      src={p.avatar}
-                      alt={p.name}
-                      className="h-12 w-12 shrink-0 rounded-full object-cover ring-2 ring-slate-100"
-                    />
-                  ) : (
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#011F50] text-sm font-bold text-white shadow-sm">
-                      {p.initials || getInitials(p.name)}
-                    </div>
-                  )}
+                  <Link
+                    to={`/user/${p.id || p._id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="shrink-0 group"
+                  >
+                    {p.avatar ? (
+                      <img
+                        src={p.avatar}
+                        alt={p.name}
+                        className="h-12 w-12 rounded-full object-cover ring-2 ring-slate-100 group-hover:ring-[#0066FF] transition-all"
+                      />
+                    ) : (
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#011F50] group-hover:bg-[#0066FF] transition-all text-sm font-bold text-white shadow-sm">
+                        {p.initials || getInitials(p.name)}
+                      </div>
+                    )}
+                  </Link>
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between">
@@ -563,7 +601,7 @@ function ChatPage() {
                       )}
                     </div>
 
-                    <p className="truncate text-xs font-semibold text-[#0066FF]">
+                    <p className="truncate text-xs font-semibold text-primary">
                       {conv.jobTitle}
                     </p>
 
@@ -573,7 +611,7 @@ function ChatPage() {
                   </div>
 
                   {conv.unreadCount > 0 && (
-                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#0066FF] px-1 text-[10px] font-bold text-white">
+                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-white">
                       {conv.unreadCount}
                     </span>
                   )}
@@ -593,7 +631,7 @@ function ChatPage() {
         {activeConversation ? (
           <>
             {/* Top Bar Header */}
-            <div className="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-3 shadow-sm">
+            <div className="flex z-10 items-center justify-between border-b border-slate-100/50 bg-white/40 px-6 py-3 shadow-sm backdrop-blur-md">
               <div className="flex items-center gap-3">
                 <button
                   type="button"
@@ -604,13 +642,9 @@ function ChatPage() {
                 </button>
 
                 {/* Clickable avatar/name — opens participant profile */}
-                <button
-                  type="button"
-                  onClick={() =>
-                    activeConversation.participant?.id &&
-                    setViewingParticipantId(activeConversation.participant.id)
-                  }
-                  className="flex items-center gap-3 rounded-xl p-1 -ml-1 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0066FF]/40"
+                <Link
+                  to={`/user/${activeConversation.participant?.id}`}
+                  className="flex items-center gap-3 rounded-xl p-1 -ml-1 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                   aria-label={`View ${activeConversation.participant?.name || "participant"}'s profile`}
                 >
                   {activeConversation.participant?.avatar ? (
@@ -627,14 +661,14 @@ function ChatPage() {
                   )}
 
                   <div className="text-left">
-                    <h2 className="text-base font-bold text-[#011F50] hover:text-[#0066FF] transition">
+                    <h2 className="text-base font-bold text-[#011F50] group-hover:text-[#0066FF] transition-colors">
                       {activeConversation.participant?.name}
                     </h2>
                     <p className="text-xs text-slate-500">
                       {activeConversation.jobTitle}
                     </p>
                   </div>
-                </button>
+                </Link>
               </div>
 
               {/* NID Verified badge on header */}
@@ -648,7 +682,7 @@ function ChatPage() {
             {/* Messages Thread Window */}
             <div 
               ref={messagesContainerRef}
-              className="flex-1 overflow-y-auto p-4 space-y-4 md:p-6 scroll-smooth"
+              className="flex-1 overflow-y-auto overflow-x-hidden p-3 scroll-smooth scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-200 hover:scrollbar-thumb-slate-300 space-y-1"
             >
               {loadingMessages ? (
                 <div className="flex h-full items-center justify-center text-sm text-slate-400">
@@ -663,20 +697,41 @@ function ChatPage() {
                   </p>
                 </div>
               ) : (
-                messages.map((msg, idx) => {
-                  const isMe =
-                    (msg.sender?._id || msg.sender) === currentUser?.id;
+                (() => {
+                  let lastDate = null;
+                  return messages.map((msg, idx) => {
+                    if (!msg) return null;
+                    
+                    const senderId = String(
+                      (msg.sender && typeof msg.sender === "object"
+                        ? msg.sender._id
+                        : msg.sender) ?? ""
+                    );
+                    const isMe = senderId === String(currentUser?.id ?? "");
+                    
+                    const msgDate = new Date(msg.createdAt).toLocaleDateString();
+                    const showDateDivider = msgDate !== lastDate;
+                    lastDate = msgDate;
 
-                  return (
-                    <MessageBubble
-                      key={msg._id || idx}
-                      msg={msg}
-                      isMe={isMe}
-                      activeChatId={activeChatId}
-                      onReport={setReportingMessage}
-                    />
-                  );
-                })
+                    return (
+                      <div key={msg._id || idx} className="space-y-4">
+                        {showDateDivider && (
+                          <div className="flex justify-center my-4">
+                            <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+                              {msgDate === new Date().toLocaleDateString() ? "Today" : msgDate}
+                            </span>
+                          </div>
+                        )}
+                        <MessageBubble
+                          msg={msg}
+                          isMe={isMe}
+                          activeChatId={activeChatId}
+                          onReport={setReportingMessage}
+                        />
+                      </div>
+                    );
+                  });
+                })()
               )}
 
               {/* Typing indicator */}
@@ -692,15 +747,15 @@ function ChatPage() {
             {/* Input Form */}
             <form
               onSubmit={handleSendMessage}
-              className="border-t border-slate-200 bg-white p-4"
+              className="z-10 border-t border-slate-200/60 bg-white/80 p-4 backdrop-blur-xl"
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <input
                   type="text"
                   value={messageText}
                   onChange={handleTypingInput}
                   placeholder="Type your message..."
-                  className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-[#0066FF] focus:bg-white focus:ring-2 focus:ring-[#0066FF]/10"
+                  className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/10"
                   disabled={sending}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
@@ -709,10 +764,11 @@ function ChatPage() {
                     }
                   }}
                 />
+                
                 <button
                   type="submit"
                   disabled={sending || !messageText.trim()}
-                  className="flex items-center gap-2 rounded-xl bg-[#0066FF] px-5 py-3 text-sm font-semibold text-white shadow-md shadow-[#0066FF]/20 transition hover:bg-[#011F50] disabled:opacity-50"
+                  className="flex shrink-0 items-center gap-2 rounded-xl bg-primary px-4 py-3 sm:px-6 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(0,102,255,0.25)] transition-all duration-300 hover:bg-[#0052cc] hover:shadow-[0_12px_24px_rgba(0,102,255,0.35)] hover:-translate-y-0.5 disabled:opacity-50"
                 >
                   <Send className="h-4 w-4" />
                   <span className="hidden sm:inline">Send</span>
@@ -732,13 +788,6 @@ function ChatPage() {
         )}
       </main>
 
-      {/* Participant Quick-View Profile Modal */}
-      {viewingParticipantId && (
-        <UserProfileModal
-          userId={viewingParticipantId}
-          onClose={() => setViewingParticipantId(null)}
-        />
-      )}
 
       {/* Report Message Modal */}
       {reportingMessage && (
@@ -748,6 +797,7 @@ function ChatPage() {
           onClose={() => setReportingMessage(null)}
         />
       )}
+      </div>
     </div>
   );
 }

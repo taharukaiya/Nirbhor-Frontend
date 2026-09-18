@@ -4,6 +4,14 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  // Ensure recharts peer deps are pre-bundled by Vite's dep optimizer
+  optimizeDeps: {
+    include: ["react-is", "recharts"],
+  },
+  resolve: {
+    // Prefer CJS builds where ESM is broken for these packages
+    mainFields: ["module", "main"],
+  },
   server: {
     proxy: {
       "/api": {

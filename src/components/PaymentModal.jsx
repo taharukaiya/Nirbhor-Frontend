@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { X, CreditCard, Lock, Loader2, ShieldCheck } from "./ui/Icons.jsx";
-import { initiateJobPayment, processJobPayment, processWalletPayment } from "../services/api";
+import { initiateJobPayment, processWalletPayment } from "../services/api";
 import { parseAmount } from "../utils/numberUtils";
 
 export default function PaymentModal({ isOpen, onClose, jobId, amount, onSuccess }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState("mock"); // "mock" | "sslcommerz"
+  const [activeTab, setActiveTab] = useState("sslcommerz"); // "sslcommerz" | "wallet"
 
   if (!isOpen) return null;
 
@@ -38,10 +38,8 @@ export default function PaymentModal({ isOpen, onClose, jobId, amount, onSuccess
     try {
       if (activeTab === "wallet") {
         await processWalletPayment(jobId);
-      } else {
-        await processJobPayment(jobId, amount);
+        onSuccess();
       }
-      onSuccess();
     } catch (err) {
       setError(err.message || "Failed to process payment");
     } finally {
@@ -68,18 +66,6 @@ export default function PaymentModal({ isOpen, onClose, jobId, amount, onSuccess
 
         {/* Payment Method Tabs */}
         <div className="flex border-b border-slate-100 overflow-x-auto">
-          <button
-            type="button"
-            onClick={() => setActiveTab("mock")}
-            className={`flex-1 min-w-max px-4 py-3 text-xs font-bold transition-colors border-b-2 ${
-              activeTab === "mock"
-                ? "border-[#0066FF] text-[#0066FF] bg-blue-50/50"
-                : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50"
-            }`}
-          >
-            <CreditCard className="w-4 h-4 inline-block mr-1.5 -mt-0.5" />
-            Demo Payment
-          </button>
           <button
             type="button"
             onClick={() => setActiveTab("wallet")}
@@ -128,48 +114,6 @@ export default function PaymentModal({ isOpen, onClose, jobId, amount, onSuccess
           {error && (
             <div className="bg-red-50 text-red-600 p-3 rounded-xl text-xs font-semibold border border-red-100 flex items-start gap-2">
               <span>{error}</span>
-            </div>
-          )}
-
-          {/* Mock Payment Tab */}
-          {activeTab === "mock" && (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">Card Number (Demo)</label>
-                <input
-                  type="text"
-                  placeholder="•••• •••• •••• ••••"
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all outline-none bg-slate-50/50"
-                  required
-                  disabled={isProcessing}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Expiry</label>
-                  <input
-                    type="text"
-                    placeholder="MM/YY"
-                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all outline-none bg-slate-50/50"
-                    required
-                    disabled={isProcessing}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">CVC</label>
-                  <input
-                    type="text"
-                    placeholder="•••"
-                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all outline-none bg-slate-50/50"
-                    required
-                    disabled={isProcessing}
-                  />
-                </div>
-              </div>
-
-              <p className="text-[11px] text-slate-400 text-center pt-1">
-                This is a demo payment for development. No actual charges will be made.
-              </p>
             </div>
           )}
 

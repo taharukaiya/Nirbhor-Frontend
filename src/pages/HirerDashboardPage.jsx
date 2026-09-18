@@ -15,6 +15,7 @@ import { useAuth } from "../contexts/useAuth.js";
 import { useToast } from "../contexts/ToastContext.jsx";
 import PaymentModal from "../components/PaymentModal.jsx";
 import ReportModal from "../components/ReportModal.jsx";
+import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import {
   Briefcase,
   Users,
@@ -60,16 +61,13 @@ function formatDate(dateString) {
 }
 
 function formatLocation(location, fallback = "Bangladesh") {
-  if (typeof location === "string") return location || fallback;
-  if (!location || typeof location !== "object") return fallback;
-  return (
-    location.fullAddress ||
-    location.address ||
-    [location.thana, location.district, location.division]
-      .filter(Boolean)
-      .join(", ") ||
-    fallback
-  );
+  if (!location) return fallback;
+  if (typeof location === "object") {
+    return location.district || location.division || location.address || fallback;
+  }
+  if (typeof location !== "string") return fallback;
+  const parts = location.split(",").map((p) => p.trim());
+  return parts[parts.length - 1] || fallback;
 }
 
 function getStatusBadge(status) {
@@ -113,6 +111,7 @@ function getStatusBadge(status) {
 }
 
 function HirerDashboardPage() {
+  useDocumentTitle("Hirer Dashboard");
   const { currentUser } = useAuth();
   const { showError, showSuccess } = useToast();
   const navigate = useNavigate();
@@ -130,7 +129,6 @@ function HirerDashboardPage() {
   const [applicantSearch, setApplicantSearch] = useState("");
 
   // Detailed Provider Profile Preview Modal State
-  const [previewProvider, setPreviewProvider] = useState(null);
   const [initiatingChatId, setInitiatingChatId] = useState(null);
 
   // Delete Job Confirm Modal State
@@ -439,7 +437,12 @@ function HirerDashboardPage() {
   }
 
   return (
-    <div className="mx-auto w-11/12 max-w-7xl py-10 lg:w-10/12">
+    <main className="min-h-[100dvh] bg-gradient-to-br from-slate-50 via-white to-blue-50/30 pt-24 pb-12 relative overflow-hidden">
+      {/* Decorative Blur Orbs */}
+      <div className="pointer-events-none absolute left-0 top-0 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#0066FF]/10 blur-[120px]" />
+      <div className="pointer-events-none absolute right-0 bottom-0 h-[30rem] w-[30rem] translate-x-1/3 translate-y-1/3 rounded-full bg-[#0066FF]/5 blur-[120px]" />
+
+      <div className="mx-auto w-11/12 max-w-7xl relative z-10 lg:w-10/12">
       {/* Top Banner & Actions */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -465,7 +468,7 @@ function HirerDashboardPage() {
 
       {/* Summary KPI Cards */}
       <div className="mt-8 grid gap-5 sm:grid-cols-3">
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+        <div className="glass-panel rounded-3xl p-6 transition-all duration-300 hover:shadow-[0_8px_32px_rgba(0,0,0,0.06)]">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Total Posted Jobs
@@ -480,7 +483,7 @@ function HirerDashboardPage() {
           <p className="mt-1 text-xs text-slate-400">Created across platform</p>
         </div>
 
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+        <div className="glass-panel rounded-3xl p-6 transition-all duration-300 hover:shadow-[0_8px_32px_rgba(0,0,0,0.06)]">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Open Listings
@@ -497,7 +500,7 @@ function HirerDashboardPage() {
           </p>
         </div>
 
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+        <div className="glass-panel rounded-3xl p-6 transition-all duration-300 hover:shadow-[0_8px_32px_rgba(0,0,0,0.06)]">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Total Applicants
@@ -514,7 +517,7 @@ function HirerDashboardPage() {
       </div>
 
       {/* Filters & Search Toolbar */}
-      <div className="mt-10 flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-10 flex flex-col gap-4 glass-panel rounded-3xl p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-1.5">
           {["ALL", "OPEN", "IN_PROGRESS", "COMPLETED"].map((tab) => (
             <button
@@ -539,7 +542,7 @@ function HirerDashboardPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by title or category..."
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-xs font-medium text-slate-800 outline-none transition focus:border-[#0066FF] focus:bg-white focus:ring-2 focus:ring-[#0066FF]/10"
+            className="w-full rounded-2xl border border-slate-200 bg-white/50 backdrop-blur-sm py-2.5 pl-10 pr-4 text-xs font-medium text-slate-800 outline-none transition focus:border-[#0066FF] focus:bg-white focus:ring-4 focus:ring-[#0066FF]/10"
           />
         </div>
       </div>
@@ -580,7 +583,7 @@ function HirerDashboardPage() {
               return (
                 <div
                   key={job.id}
-                  className="group rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-[#0066FF]/40 hover:shadow-md"
+                  className="group glass-panel rounded-3xl p-6 transition-all duration-300 hover:border-[#0066FF]/40 hover:shadow-[0_8px_32px_rgba(0,0,0,0.06)]"
                 >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div className="space-y-2.5">
@@ -688,10 +691,10 @@ function HirerDashboardPage() {
                       )}
 
                       {/* Leave Review button - for COMPLETED jobs */}
-                      {["completed", "COMPLETED"].includes(
+                      {["completed", "COMPLETED", "in_progress", "IN_PROGRESS"].includes(
                         String(job.status),
                       ) &&
-                        !reviewedJobs.has(job.id) && (
+                        !(job.hasReviewed || reviewedJobs.has(job.id)) && (
                           <button
                             type="button"
                             onClick={() => handleOpenReview(job)}
@@ -702,10 +705,10 @@ function HirerDashboardPage() {
                           </button>
                         )}
 
-                      {["completed", "COMPLETED"].includes(
+                      {["completed", "COMPLETED", "in_progress", "IN_PROGRESS"].includes(
                         String(job.status),
                       ) &&
-                        reviewedJobs.has(job.id) && (
+                        (job.hasReviewed || reviewedJobs.has(job.id)) && (
                           <span className="flex items-center gap-2 rounded-2xl bg-slate-100 px-5 py-3 text-xs font-bold text-slate-500">
                             <CheckCircle className="h-4 w-4" />
                             Reviewed
@@ -722,7 +725,7 @@ function HirerDashboardPage() {
 
       {/* Applicant Tracking Slide-Over Modal / Side Panel */}
       {selectedJob && (
-        <div className="fixed inset-0 z-[100] flex justify-end bg-slate-950/60 backdrop-blur-sm transition-opacity duration-300">
+        <div className="fixed inset-0 z-[100] flex justify-end bg-slate-900/40 backdrop-blur-md transition-all duration-500 animate-in fade-in">
           <div
             className="fixed inset-0"
             onClick={() => {
@@ -732,9 +735,9 @@ function HirerDashboardPage() {
             aria-label="Close applicant panel"
           />
 
-          <aside className="relative z-10 flex h-full w-full max-w-2xl flex-col bg-white shadow-2xl transition-transform duration-300">
+          <aside className="relative z-10 flex h-full max-h-screen w-full max-w-2xl flex-col overflow-hidden bg-white/95 backdrop-blur-3xl shadow-2xl transition-transform duration-500 animate-in slide-in-from-right">
             {/* Slide-over Header */}
-            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
+            <div className="flex items-center justify-between border-b border-slate-100 bg-white/50 px-6 py-5">
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-[#0066FF]">
                   Applicant Tracking
@@ -760,9 +763,9 @@ function HirerDashboardPage() {
             </div>
 
             {/* Modal Applicant Search */}
-            <div className="border-b border-slate-100 px-6 py-3 bg-slate-50">
-              <div className="relative">
-                <Search className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
+            <div className="border-b border-slate-100 px-6 py-4 bg-white/40">
+              <div className="relative group">
+                <Search className="absolute left-3.5 top-3 h-4 w-4 text-slate-400 transition-colors group-focus-within:text-[#0066FF]" />
                 <input
                   type="text"
                   value={applicantSearch}
@@ -797,33 +800,38 @@ function HirerDashboardPage() {
                   </p>
                 </div>
               ) : (
-                filteredApplicants.map((applicant) => {
+                filteredApplicants.map((applicant, idx) => {
                   const provider = applicant.provider || {};
                   return (
                     <div
                       key={applicant.proposalId}
-                      className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm space-y-4 transition hover:border-[#0066FF]/40"
+                      className="rounded-3xl border border-slate-100 bg-white/80 backdrop-blur-xl p-5 shadow-sm space-y-4 transition-all duration-300 hover:border-[#0066FF]/40 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#0066FF]/5"
+                      style={{ animationDelay: `${idx * 50}ms` }}
                     >
                       {/* Applicant Profile Header */}
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3.5">
-                          {provider.avatar ? (
-                            <img
-                              src={provider.avatar}
-                              alt={provider.name}
-                              className="h-12 w-12 rounded-2xl object-cover ring-1 ring-slate-200"
-                            />
-                          ) : (
-                            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#011F50] text-sm font-bold text-white">
-                              {provider.initials || getInitials(provider.name)}
-                            </div>
-                          )}
+                          <Link to={`/user/${provider._id || provider.id}`} className="shrink-0 hover:opacity-80 transition-opacity">
+                            {provider.avatar ? (
+                              <img
+                                src={provider.avatar}
+                                alt={provider.name}
+                                className="h-12 w-12 rounded-2xl object-cover ring-1 ring-slate-200"
+                              />
+                            ) : (
+                              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#011F50] text-sm font-bold text-white">
+                                {provider.initials || getInitials(provider.name)}
+                              </div>
+                            )}
+                          </Link>
 
                           <div>
                             <div className="flex items-center gap-2">
-                              <h4 className="font-bold text-[#011F50] text-base">
-                                {provider.name}
-                              </h4>
+                              <Link to={`/user/${provider._id || provider.id}`} className="hover:underline hover:text-[#0066FF] transition-colors">
+                                <h4 className="font-bold text-[#011F50] text-base">
+                                  {provider.name}
+                                </h4>
+                              </Link>
                               {provider.nidVerified && (
                                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
                                   <CheckCircle className="h-3 w-3 text-emerald-600" />
@@ -877,8 +885,9 @@ function HirerDashboardPage() {
                       </div>
 
                       {/* Proposal Application Note */}
+                      {/* Applicant Proposal Context */}
                       {applicant.note && (
-                        <div className="rounded-2xl bg-slate-50 p-3.5 text-xs leading-relaxed text-slate-700 border border-slate-100">
+                        <div className="rounded-2xl bg-slate-50/80 backdrop-blur-md p-4 text-sm text-slate-700 leading-relaxed border border-slate-100 shadow-inner">
                           <span className="font-bold text-slate-800 block mb-1">
                             Proposal Note:
                           </span>
@@ -936,7 +945,7 @@ function HirerDashboardPage() {
                           )}
                         <button
                           type="button"
-                          onClick={() => setPreviewProvider(provider)}
+                          onClick={() => navigate(`/user/${provider._id || provider.id}`)}
                           className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50"
                         >
                           <Info className="h-4 w-4 text-slate-500" />
@@ -961,101 +970,6 @@ function HirerDashboardPage() {
               )}
             </div>
           </aside>
-        </div>
-      )}
-
-      {/* Provider Detailed Profile Preview Modal */}
-      {previewProvider && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl space-y-5">
-            <div className="flex items-start justify-between border-b border-slate-100 pb-4">
-              <div className="flex items-center gap-3.5">
-                {previewProvider.avatar ? (
-                  <img
-                    src={previewProvider.avatar}
-                    alt={previewProvider.name}
-                    className="h-14 w-14 rounded-2xl object-cover ring-1 ring-slate-200"
-                  />
-                ) : (
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#011F50] text-base font-bold text-white">
-                    {previewProvider.initials ||
-                      getInitials(previewProvider.name)}
-                  </div>
-                )}
-                <div>
-                  <h3 className="text-xl font-bold text-[#011F50]">
-                    {previewProvider.name}
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    {previewProvider.category || "Service Provider"} •{" "}
-                    {formatLocation(previewProvider.location, "Bangladesh")}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setPreviewProvider(null)}
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-500 hover:bg-slate-100"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 text-center">
-              <div className="rounded-2xl bg-slate-50 p-3">
-                <span className="text-xs text-slate-400 block">Rating</span>
-                <span className="text-base font-bold text-amber-600 flex items-center justify-center gap-1 mt-0.5">
-                  <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                  {previewProvider.rating > 0
-                    ? previewProvider.rating.toFixed(1)
-                    : "N/A"}
-                </span>
-              </div>
-              <div className="rounded-2xl bg-slate-50 p-3">
-                <span className="text-xs text-slate-400 block">
-                  Completed Jobs
-                </span>
-                <span className="text-base font-bold text-[#011F50] mt-0.5 block">
-                  {previewProvider.completedJobs || 0}
-                </span>
-              </div>
-            </div>
-
-            <div className="space-y-2 text-xs">
-              <div>
-                <span className="font-bold text-slate-700 block">
-                  Contact Information:
-                </span>
-                <p className="text-slate-600 mt-0.5">
-                  Email: {previewProvider.email || "N/A"}
-                </p>
-                <p className="text-slate-600">
-                  Phone: {previewProvider.phone || "N/A"}
-                </p>
-              </div>
-
-              {previewProvider.bio && (
-                <div className="pt-2">
-                  <span className="font-bold text-slate-700 block">
-                    Bio / Summary:
-                  </span>
-                  <p className="text-slate-600 mt-0.5 bg-slate-50 p-3 rounded-2xl leading-relaxed">
-                    {previewProvider.bio}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div className="pt-2 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setPreviewProvider(null)}
-                className="rounded-2xl bg-[#011F50] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#0066FF]"
-              >
-                Close Profile
-              </button>
-            </div>
-          </div>
         </div>
       )}
 
@@ -1191,12 +1105,11 @@ function HirerDashboardPage() {
           </div>
         </div>
       )}
-
-      {/* Report Modal */}
       {reportJob && (
         <ReportModal job={reportJob} onClose={() => setReportJob(null)} />
       )}
-    </div>
+      </div>
+    </main>
   );
 }
 

@@ -56,11 +56,11 @@ export function sendMessage(chatId, body) {
   if (!s) return Promise.reject(new Error("Socket not initialized"));
 
   return new Promise((resolve, reject) => {
-    s.emit("chat:message", { chatId, body }, (response) => {
+    s.emit("chat:message", { chatId, body, type: "TEXT" }, (response) => {
       if (response.error) {
         reject(new Error(response.error));
       } else {
-        resolve(response.message);
+        resolve(response || {});
       }
     });
   });
