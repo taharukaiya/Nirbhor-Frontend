@@ -24,7 +24,7 @@ import PublicProfilePage from "../pages/PublicProfilePage.jsx";
 // Admin Panel Imports
 import { AdminRoute } from "../components/admin/AdminRoute.jsx";
 import { AdminProvider } from "../contexts/AdminContext.jsx";
-import { AdminLayout } from "../components/admin/AdminLayout.jsx";
+import { AdminLayout } from "../layouts/AdminLayout.jsx";
 import { AdminLoginPage } from "../pages/admin/AdminLoginPage.jsx";
 import { AdminOverviewPage } from "../pages/admin/AdminOverviewPage.jsx";
 import { AdminVerificationsPage } from "../pages/admin/AdminVerificationsPage.jsx";
@@ -35,6 +35,8 @@ import { AdminDisputesPage } from "../pages/admin/AdminDisputesPage.jsx";
 import { AdminManagersPage } from "../pages/admin/AdminManagersPage.jsx";
 import { AdminAuditLogsPage } from "../pages/admin/AdminAuditLogsPage.jsx";
 import AdminReportsPage from "../pages/admin/AdminReportsPage.jsx";
+import AdminAccountActionPage from "../pages/admin/AdminAccountActionPage.jsx";
+import { AdminMessageReportsPage } from "../pages/admin/AdminMessageReportsPage.jsx";
 
 const router = createBrowserRouter([
   {
@@ -50,8 +52,8 @@ const router = createBrowserRouter([
         path: "how-it-works",
         element: (
           <SectionPage
-            title="How It Works"
-            description="See how Nirbhor connects verified users through jobs, proposals, chat, and secure payment."
+            titleKey="howItWorks.pageTitle"
+            descKey="howItWorks.pageDescription"
           />
         ),
       },
@@ -59,8 +61,8 @@ const router = createBrowserRouter([
         path: "about",
         element: (
           <SectionPage
-            title="About Nirbhor"
-            description="Learn how Nirbhor is built to support trust, verification, and professional service hiring."
+            titleKey="about.pageTitle"
+            descKey="about.pageDescription"
           />
         ),
       },
@@ -68,8 +70,8 @@ const router = createBrowserRouter([
         path: "faq",
         element: (
           <SectionPage
-            title="FAQ"
-            description="Find answers to common questions about verification, jobs, proposals, and payments."
+            titleKey="faq.pageTitle"
+            descKey="faq.pageDescription"
           />
         ),
       },
@@ -77,8 +79,8 @@ const router = createBrowserRouter([
         path: "privacy",
         element: (
           <SectionPage
-            title="Privacy Policy"
-            description="Review how Nirbhor protects account data, verification details, and job-related information."
+            titleKey="privacy.pageTitle"
+            descKey="privacy.pageDescription"
           />
         ),
       },
@@ -86,8 +88,8 @@ const router = createBrowserRouter([
         path: "terms",
         element: (
           <SectionPage
-            title="Terms & Conditions"
-            description="Read the platform rules that guide account use, verification, and marketplace activity."
+            titleKey="terms.pageTitle"
+            descKey="terms.pageDescription"
           />
         ),
       },
@@ -164,6 +166,14 @@ const router = createBrowserRouter([
         element: <AdminLoginPage />,
       },
       {
+        path: "admin/forgot-password",
+        element: <AdminAccountActionPage />,
+      },
+      {
+        path: "admin/reset-password/:token",
+        element: <AdminAccountActionPage />,
+      },
+      {
         path: "admin",
         element: <AdminRoute />,
         children: [
@@ -196,6 +206,7 @@ const router = createBrowserRouter([
                 element: <AdminRoute requiredPermission="canModerateContent" />,
                 children: [
                   { path: "categories", element: <AdminCategoriesPage /> },
+                  { path: "message-reports", element: <AdminMessageReportsPage /> },
                 ],
               },
               {

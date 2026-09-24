@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { X, CreditCard, Lock, Loader2, ShieldCheck } from "./ui/Icons.jsx";
 import { initiateJobPayment, processWalletPayment } from "../services/api";
 import { parseAmount } from "../utils/numberUtils";
@@ -11,8 +12,8 @@ export default function PaymentModal({ isOpen, onClose, jobId, amount, onSuccess
   if (!isOpen) return null;
 
   const parsedAmount = parseAmount(amount);
-  const platformFee = Math.round(parsedAmount * 0.05);
-  const providerPayout = parsedAmount - platformFee;
+  const platformFee = Math.round(parsedAmount * 0.05 * 100) / 100;
+  const providerPayout = Math.round((parsedAmount - platformFee) * 100) / 100;
 
   const handlePaymentSubmit = async (e) => {
     e.preventDefault();
@@ -47,8 +48,8 @@ export default function PaymentModal({ isOpen, onClose, jobId, amount, onSuccess
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+  return createPortal(
+    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg mx-4 sm:mx-auto max-h-[90vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50/80">
@@ -175,5 +176,5 @@ export default function PaymentModal({ isOpen, onClose, jobId, amount, onSuccess
         </form>
       </div>
     </div>
-  );
+  , document.body);
 }

@@ -79,10 +79,20 @@ export function AdminUsersPage() {
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
               {filteredUsers.map((u) => (
-                <tr key={u._id || u.id} className="hover:bg-slate-50 dark:bg-slate-800/40">
+                <tr key={u._id || u.id} className="group transition-all duration-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:shadow-[inset_2px_0_0_0_#0066FF]">
                   <td className="p-4">
                     <div className="font-bold text-slate-900 dark:text-white">{u.name}</div>
                     <div className="text-[11px] text-slate-600 dark:text-slate-400">{u.email}</div>
+                    {u.dateOfBirth && (
+                      <div className="text-[10px] text-slate-500 dark:text-slate-500 mt-0.5">
+                        DoB: {new Date(u.dateOfBirth).toLocaleDateString()}
+                      </div>
+                    )}
+                    {u.nidVerified && u.nidNumber && (
+                      <div className="text-[10px] font-mono text-slate-500 dark:text-slate-500">
+                        NID: {u.nidNumber}
+                      </div>
+                    )}
                   </td>
                   <td className="p-4 text-slate-700 dark:text-slate-300">{u.phone || "N/A"}</td>
                   <td className="p-4 font-semibold text-slate-800 dark:text-slate-200">

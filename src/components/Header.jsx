@@ -289,7 +289,7 @@ function Header() {
 
         {/* ── Desktop right actions ── */}
         <div className="hidden items-center gap-3 lg:flex">
-          <button
+          {/* <button
             type="button"
             onClick={() => {
               const newLng = i18n.language === 'en' ? 'bn' : 'en';
@@ -305,8 +305,8 @@ function Header() {
           >
             <span className="text-sm">{i18n.language === 'en' ? '🇧🇩' : '🇬🇧'}</span>
             <span>{i18n.language === 'en' ? 'বাংলা' : 'EN'}</span>
-          </button>
-          
+          </button> */}
+
           {isAuthenticated && (
             <>
               {/* Notifications Dropdown */}

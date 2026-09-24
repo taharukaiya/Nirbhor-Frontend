@@ -21,9 +21,10 @@ export default function TransactionDashboardPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const endpoint = isAdmin ? "/api/transactions/admin/all" : "/api/transactions/my-transactions";
+      const endpoint = isAdmin ? "/transactions/admin/all" : "/transactions/my-transactions";
       const params = filterType !== "ALL" ? new URLSearchParams({ type: filterType }).toString() : "";
-      const url = `${import.meta.env.VITE_API_URL || ""}${endpoint}${params ? `?${params}` : ""}`;
+      const baseUrl = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
+      const url = `${baseUrl}${endpoint}${params ? `?${params}` : ""}`;
       
       const res = await fetch(url, {
         credentials: "include"
@@ -35,7 +36,7 @@ export default function TransactionDashboardPage() {
       }
 
       if (isAdmin) {
-        const analyticsRes = await fetch(`${import.meta.env.VITE_API_URL || ""}/api/transactions/admin/analytics`, {
+        const analyticsRes = await fetch(`${baseUrl}/transactions/admin/analytics`, {
           credentials: "include"
         });
         const analyticsData = await analyticsRes.json();
@@ -170,7 +171,16 @@ export default function TransactionDashboardPage() {
                       })()}
                     </td>
                     <td className="px-6 py-4 text-sm font-semibold text-gray-900 dark:text-gray-100 whitespace-nowrap">
-                      ৳{txn.amount}
+                      {(() => {
+                        let displayAmount = txn.amount;
+                        if (!isAdmin && txn.type === "ESCROW" && txn.platformFee) {
+                          const isProvider = txn.provider?._id === user.id || txn.provider?.id === user.id;
+                          if (isProvider) {
+                            displayAmount = txn.amount - txn.platformFee;
+                          }
+                        }
+                        return `৳${displayAmount}`;
+                      })()}
                     </td>
                     {isAdmin && (
                       <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">

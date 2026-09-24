@@ -48,7 +48,7 @@ export function AdminAuditLogsPage() {
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
               {auditLogs.map((log) => (
-                <tr key={log._id || log.id} className="hover:bg-slate-50 dark:bg-slate-800/40">
+                <tr key={log._id || log.id} className="group transition-all duration-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:shadow-[inset_2px_0_0_0_#0066FF]">
                   <td className="p-4 text-slate-600 dark:text-slate-400">
                     {new Date(log.createdAt).toLocaleString()}
                   </td>

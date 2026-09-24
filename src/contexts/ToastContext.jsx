@@ -1,86 +1,99 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-} from "react";
+import { createContext, useContext, useMemo } from "react";
+import toast, { Toaster } from "react-hot-toast";
 
 const ToastContext = createContext(null);
 
-function ToastItem({ toast, onDismiss }) {
-  const tones = {
-    success: "border-emerald-200 bg-emerald-50 text-emerald-800",
-    error: "border-red-200 bg-red-50 text-red-700",
-    info: "border-sky-200 bg-sky-50 text-sky-700",
-  };
+/* ── Shared style ─────────────────────────────── */
+const base = {
+  backdropFilter: "blur(20px)",
+  WebkitBackdropFilter: "blur(20px)",
+  borderRadius: "14px",
+  padding: "12px 16px",
+  fontSize: "0.875rem",
+  fontWeight: "500",
+  maxWidth: "380px",
+  boxShadow: "0 8px 32px rgba(0,0,0,0.35), 0 1px 0 rgba(255,255,255,0.05) inset",
+};
 
-  return (
-    <div
-      className={`pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-2xl border px-4 py-3 shadow-lg backdrop-blur-sm ${tones[toast.type] || tones.info}`}
-      role="status"
-      aria-live="polite"
-    >
-      <div className="mt-0.5 text-sm font-bold">
-        {toast.type === "success" ? "✓" : toast.type === "error" ? "!" : "i"}
-      </div>
-      <p className="flex-1 text-sm font-medium">{toast.message}</p>
-      <button
-        type="button"
-        onClick={() => onDismiss(toast.id)}
-        className="text-sm font-semibold opacity-70 transition-opacity hover:opacity-100"
-        aria-label="Dismiss notification"
-      >
-        ×
-      </button>
-    </div>
-  );
-}
+const styles = {
+  success: {
+    ...base,
+    background: "#0d9f6e",
+    border: "1px solid #059669",
+    color: "#ffffff",
+  },
+  error: {
+    ...base,
+    background: "#dc2626",
+    border: "1px solid #b91c1c",
+    color: "#ffffff",
+  },
+  info: {
+    ...base,
+    background: "#1d4ed8",
+    border: "1px solid #1e40af",
+    color: "#ffffff",
+  },
+};
+
+const iconThemes = {
+  success: { primary: "#ffffff", secondary: "rgba(255,255,255,0.3)" },
+  error:   { primary: "#ffffff", secondary: "rgba(255,255,255,0.3)" },
+};
 
 export function ToastProvider({ children }) {
-  const [toasts, setToasts] = useState([]);
+  const showToast = (message, type = "info") => {
+    const duration = type === "error" ? 5000 : 4000;
 
-  const dismissToast = useCallback((id) => {
-    setToasts((current) => current.filter((toast) => toast.id !== id));
-  }, []);
-
-  const showToast = useCallback(
-    (message, type = "info") => {
-      const id = crypto.randomUUID();
-      setToasts((current) => [...current, { id, message, type }]);
-      window.setTimeout(() => dismissToast(id), 4000);
-    },
-    [dismissToast],
-  );
+    if (type === "success") {
+      toast.success(message, {
+        style: styles.success,
+        iconTheme: iconThemes.success,
+        duration,
+      });
+    } else if (type === "error") {
+      toast.error(message, {
+        style: styles.error,
+        iconTheme: iconThemes.error,
+        duration,
+      });
+    } else {
+      toast(message, {
+        icon: "💙",
+        style: styles.info,
+        duration,
+      });
+    }
+  };
 
   const value = useMemo(
     () => ({
       showToast,
-      showSuccess: (message) => showToast(message, "success"),
-      showError: (message) => showToast(message, "error"),
-      showInfo: (message) => showToast(message, "info"),
+      showSuccess: (msg) => showToast(msg, "success"),
+      showError:   (msg) => showToast(msg, "error"),
+      showInfo:    (msg) => showToast(msg, "info"),
     }),
-    [showToast],
+    []
   );
 
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="pointer-events-none fixed inset-x-0 top-4 z-[200] flex justify-center px-4">
-        <div className="flex w-full max-w-md flex-col gap-2">
-          {toasts.map((toast) => (
-            <ToastItem key={toast.id} toast={toast} onDismiss={dismissToast} />
-          ))}
-        </div>
-      </div>
+      <Toaster
+        position="top-center"
+        reverseOrder={false}
+        gutter={10}
+        containerStyle={{ top: 20 }}
+        toastOptions={{
+          duration: 4000,
+        }}
+      />
     </ToastContext.Provider>
   );
 }
 
 export function useToast() {
   const context = useContext(ToastContext);
-  if (!context) {
-    throw new Error("useToast must be used within ToastProvider.");
-  }
+  if (!context) throw new Error("useToast must be used within ToastProvider.");
   return context;
 }

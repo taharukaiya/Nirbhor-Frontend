@@ -285,8 +285,13 @@ export default function PublicProfilePage() {
                       </div>
                     </Link>
                     <div className="flex items-center gap-1 bg-amber-50 px-2 py-1 rounded-lg border border-amber-100">
-                      <span className="font-bold text-amber-600 text-sm">{review.rating.toFixed(1)}</span>
-                      <Star className="w-3 h-3 text-amber-500 fill-current" />
+                      <span className="font-bold text-amber-600 text-sm mr-1">{review.rating.toFixed(1)}</span>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star 
+                          key={star} 
+                          className={`w-3 h-3 ${star <= review.rating ? "text-amber-500 fill-amber-500" : "text-slate-300"}`}
+                        />
+                      ))}
                     </div>
                   </div>
                   

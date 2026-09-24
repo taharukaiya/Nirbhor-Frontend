@@ -159,7 +159,7 @@ export function AdminManagersPage() {
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
               {managers.map((m) => (
-                <tr key={m._id || m.id} className="hover:bg-slate-50 dark:bg-slate-800/40">
+                <tr key={m._id || m.id} className="group transition-all duration-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:shadow-[inset_2px_0_0_0_#0066FF]">
                   <td className="p-4">
                     <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
                       {m.name}

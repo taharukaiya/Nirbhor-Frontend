@@ -175,3 +175,17 @@ export async function changeAdminPassword(currentPassword, newPassword) {
     body: JSON.stringify({ currentPassword, newPassword }),
   });
 }
+
+export async function getMessageReports(params = {}) {
+  const query = new URLSearchParams(params).toString();
+  return requestAdmin(`/message-reports${query ? `?${query}` : ""}`, {
+    method: "GET",
+  });
+}
+
+export async function moderateMessageReport(reportId, { status, adminNote, suspendUser }) {
+  return requestAdmin(`/message-reports/${reportId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status, adminNote, suspendUser }),
+  });
+}

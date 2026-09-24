@@ -89,7 +89,7 @@ export function AdminDisputesPage() {
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
               {disputes.map((d) => (
-                <tr key={d._id || d.id} className="hover:bg-slate-50 dark:bg-slate-800/40">
+                <tr key={d._id || d.id} className="group transition-all duration-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:shadow-[inset_2px_0_0_0_#0066FF]">
                   <td className="p-4 font-bold text-slate-900 dark:text-white max-w-xs truncate">
                     {d.job?.title || "Associated Job"}
                   </td>

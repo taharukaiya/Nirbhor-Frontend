@@ -50,8 +50,9 @@ async function request(path, options = {}, isRetry = false) {
     }
 
     let message = `Request failed with status ${response.status}`;
+    let payload = null;
     try {
-      const payload = await response.json();
+      payload = await response.json();
       message =
         payload.error?.message ||
         payload.error ||
@@ -60,7 +61,10 @@ async function request(path, options = {}, isRetry = false) {
     } catch {
       // Keep the HTTP status when the server does not return JSON.
     }
-    throw new Error(message);
+    const error = new Error(message);
+    error.status = response.status;
+    error.code = payload?.error?.code || payload?.code || null;
+    throw error;
   }
   const contentType = response.headers.get("content-type") || "";
   if (contentType.includes("application/json")) return response.json();
@@ -90,6 +94,11 @@ export async function getJobs(signal) {
   return listFromResponse(await request("/jobs", { signal }), "jobs");
 }
 
+export async function getAdminJobs(signal) {
+  const data = await request("/admin/jobs", { signal });
+  return data?.data?.jobs || [];
+}
+
 export async function forgotPassword(email) {
   return request("/auth/forgot-password", {
     method: "POST",
@@ -100,6 +109,22 @@ export async function forgotPassword(email) {
 
 export async function resetPassword(token, password) {
   return request(`/auth/reset-password/${encodeURIComponent(token)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password }),
+  });
+}
+
+export async function forgotPasswordAdmin(email) {
+  return request("/admin/auth/forgot-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function resetPasswordAdmin(token, password) {
+  return request(`/admin/auth/reset-password/${encodeURIComponent(token)}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ password }),
@@ -283,6 +308,14 @@ export async function submitReview(jobId, payload) {
   });
 }
 
+export async function updateReview(jobId, payload) {
+  return request(`/reviews/jobs/${encodeURIComponent(jobId)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function getJobReviews(jobId, signal) {
   return request(`/reviews/jobs/${encodeURIComponent(jobId)}`, { signal });
 }
@@ -341,4 +374,18 @@ export async function initiateWalletDeposit(amount) {
 
 export async function getUserReviews(userId, signal) {
   return request(`/reviews/users/${encodeURIComponent(userId)}`, { signal });
+}
+
+export async function getTransactions(filterType, signal) {
+  const params = filterType !== "ALL" ? new URLSearchParams({ type: filterType }).toString() : "";
+  return request(`/transactions/my-transactions${params ? `?${params}` : ""}`, { signal });
+}
+
+export async function getAdminTransactions(filterType, signal) {
+  const params = filterType !== "ALL" ? new URLSearchParams({ type: filterType }).toString() : "";
+  return request(`/transactions/admin/all${params ? `?${params}` : ""}`, { signal });
+}
+
+export async function getAdminAnalytics(signal) {
+  return request(`/transactions/admin/analytics`, { signal });
 }

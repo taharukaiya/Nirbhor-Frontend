@@ -274,7 +274,7 @@ function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto mt-16 w-full max-w-[90rem] px-5 sm:px-8 lg:px-12 mb-20">
+      <section className="mx-auto mt-16 w-full max-w-[90rem] px-5 sm:px-8 lg:px-12">
         <div className="relative overflow-hidden rounded-[3rem] bg-[#011F50] px-10 py-16 sm:p-20 text-white shadow-2xl shadow-[#011F50]/40 flex flex-col items-center text-center">
           <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 mix-blend-overlay"></div>
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[80%] w-[80%] rounded-full bg-[#0066FF]/20 blur-[100px] pointer-events-none" />

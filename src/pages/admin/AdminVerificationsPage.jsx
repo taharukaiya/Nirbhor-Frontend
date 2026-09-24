@@ -101,7 +101,7 @@ export function AdminVerificationsPage() {
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
               {verifications.map((item) => (
-                <tr key={item.id} className="hover:bg-slate-50 dark:bg-slate-800/40">
+                <tr key={item.id} className="group transition-all duration-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:shadow-[inset_2px_0_0_0_#0066FF]">
                   <td className="p-4">
                     <div className="font-bold text-slate-900 dark:text-white">{item.name}</div>
                     <div className="text-[11px] text-slate-600 dark:text-slate-400">{item.email}</div>
