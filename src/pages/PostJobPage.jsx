@@ -103,14 +103,24 @@ function PostJobPage() {
       );
       return;
     }
-    if (
-      !Number.isFinite(budgetMin) ||
-      !Number.isFinite(budgetMax) ||
-      budgetMax < budgetMin ||
-      budgetMax <= 0
-    ) {
-      showError("Please enter a valid budget range in ৳.");
+    if (!Number.isFinite(budgetMin) || budgetMin < 300) {
+      showError("Budget minimum cannot be less than 300 ৳.");
       return;
+    }
+
+    if (!Number.isFinite(budgetMax) || budgetMax < budgetMin) {
+      showError("Budget maximum cannot be less than the budget minimum.");
+      return;
+    }
+
+    if (form.deadline) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const selectedDate = new Date(form.deadline);
+      if (selectedDate < today) {
+        showError("Preferred completion date cannot be in the past.");
+        return;
+      }
     }
 
     setSubmitting(true);
@@ -310,7 +320,7 @@ function PostJobPage() {
             Budget minimum (৳)
             <input
               type="number"
-              min="0"
+              min="300"
               name="budgetMin"
               value={form.budgetMin}
               onChange={updateField}
@@ -323,7 +333,7 @@ function PostJobPage() {
             Budget maximum (৳)
             <input
               type="number"
-              min="0"
+              min={form.budgetMin || 300}
               name="budgetMax"
               value={form.budgetMax}
               onChange={updateField}
@@ -373,6 +383,7 @@ function PostJobPage() {
             <input
               type="date"
               name="deadline"
+              min={new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split("T")[0]}
               value={form.deadline}
               onChange={updateField}
               className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 font-normal outline-none transition focus:border-[#0066FF] focus:bg-white focus:ring-4 focus:ring-[#0066FF]/10"
