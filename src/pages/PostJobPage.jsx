@@ -193,7 +193,7 @@ function PostJobPage() {
         <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent pointer-events-none" />
         <div className="grid gap-5 md:grid-cols-2 relative z-10">
           <label className="grid gap-2 text-sm font-semibold text-slate-700 md:col-span-2">
-            Job title
+            <span>Job title <span className="text-red-500">*</span></span>
             <input
               name="title"
               value={form.title}
@@ -205,7 +205,7 @@ function PostJobPage() {
           </label>
 
           <label className="grid gap-2 text-sm font-semibold text-slate-700 md:col-span-2">
-            Description
+            <span>Description <span className="text-red-500">*</span></span>
             <textarea
               name="description"
               value={form.description}
@@ -218,7 +218,7 @@ function PostJobPage() {
           </label>
 
           <label className="grid gap-2 text-sm font-semibold text-slate-700">
-            Service category
+            <span>Service category <span className="text-red-500">*</span></span>
             <select
               name="category"
               value={form.category}
@@ -247,7 +247,7 @@ function PostJobPage() {
           </label>
 
           <label className="grid gap-2 text-sm font-semibold text-slate-700">
-            Division
+            <span>Division <span className="text-red-500">*</span></span>
             <select
               name="location.division"
               value={form.location.division}
@@ -265,7 +265,7 @@ function PostJobPage() {
           </label>
 
           <label className="grid gap-2 text-sm font-semibold text-slate-700">
-            District
+            <span>District <span className="text-red-500">*</span></span>
             <select
               name="location.district"
               value={form.location.district}
@@ -317,7 +317,7 @@ function PostJobPage() {
           </label>
 
           <label className="grid gap-2 text-sm font-semibold text-slate-700">
-            Budget minimum (৳)
+            <span>Budget minimum (৳) <span className="text-red-500">*</span></span>
             <input
               type="number"
               min="300"
@@ -330,7 +330,7 @@ function PostJobPage() {
           </label>
 
           <label className="grid gap-2 text-sm font-semibold text-slate-700">
-            Budget maximum (৳)
+            <span>Budget maximum (৳) <span className="text-red-500">*</span></span>
             <input
               type="number"
               min={form.budgetMin || 300}

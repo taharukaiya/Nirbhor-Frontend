@@ -11,6 +11,7 @@
  */
 import { createContext, useContext, useMemo } from "react";
 import toast, { Toaster } from "react-hot-toast";
+import { X } from "lucide-react";
 
 const ToastContext = createContext(null);
 
@@ -54,22 +55,35 @@ const iconThemes = {
 
 export function ToastProvider({ children }) {
   const showToast = (message, type = "info") => {
-    const duration = type === "error" ? 5000 : 4000;
+    const duration = type === "error" ? 3500 : 2500;
+
+    const content = (t) => (
+      <div className="flex items-center gap-2">
+        <span className="flex-1">{message}</span>
+        <button
+          onClick={() => toast.dismiss(t.id)}
+          className="ml-2 rounded-full p-1 opacity-70 hover:bg-white/20 hover:opacity-100 transition-all"
+          aria-label="Dismiss"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+    );
 
     if (type === "success") {
-      toast.success(message, {
+      toast.success(content, {
         style: styles.success,
         iconTheme: iconThemes.success,
         duration,
       });
     } else if (type === "error") {
-      toast.error(message, {
+      toast.error(content, {
         style: styles.error,
         iconTheme: iconThemes.error,
         duration,
       });
     } else {
-      toast(message, {
+      toast(content, {
         icon: "💙",
         style: styles.info,
         duration,
@@ -96,7 +110,7 @@ export function ToastProvider({ children }) {
         gutter={10}
         containerStyle={{ top: 20 }}
         toastOptions={{
-          duration: 4000,
+          duration: 2500,
         }}
       />
     </ToastContext.Provider>

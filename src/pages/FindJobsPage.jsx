@@ -12,6 +12,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getJobs, applyToJob, switchMode, getMyApplications, getCategories } from "../services/api.js";
+import { locations } from "../data/locations.js";
 import { useAuth } from "../contexts/useAuth.js";
 import { useToast } from "../contexts/ToastContext.jsx";
 import { useRemoteList } from "../hooks/useRemoteList.js";
@@ -593,8 +594,18 @@ function FindJobsPage() {
 
         const matchCat =
           filters.category === "All" || j.category === filters.category;
-        const matchLoc =
-          filters.location === "All" || j.district === filters.location;
+        const loc = filters.location;
+        let matchLoc = loc === "All";
+        if (!matchLoc) {
+          const divKey = loc === "Chittagong" ? "Chattogram" : loc === "Barisal" ? "Barishal" : loc;
+          matchLoc =
+            j.district === loc ||
+            j.district === divKey ||
+            j.division === loc ||
+            j.division === divKey ||
+            (locations[divKey] && !!locations[divKey][j.district]) ||
+            (locations[divKey] && !!locations[divKey][j.location]);
+        }
         const matchStatus =
           filters.status === "All" ||
           (filters.status === "Open" && j.status === "open") ||

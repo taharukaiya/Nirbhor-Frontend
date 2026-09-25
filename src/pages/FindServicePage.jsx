@@ -12,6 +12,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getServices, initiateChat, getCategories } from "../services/api.js";
+import { locations } from "../data/locations.js";
 import { useAuth } from "../contexts/useAuth.js";
 import { useToast } from "../contexts/ToastContext.jsx";
 import { useRemoteList } from "../hooks/useRemoteList.js";
@@ -409,8 +410,18 @@ function FindServicePage() {
           (s.skills && s.skills.some((sk) => sk.toLowerCase().includes(q)));
         const matchCat =
           filters.category === "All" || s.category === filters.category;
-        const matchLoc =
-          filters.location === "All" || s.district === filters.location;
+        const loc = filters.location;
+        let matchLoc = loc === "All";
+        if (!matchLoc) {
+          const divKey = loc === "Chittagong" ? "Chattogram" : loc === "Barisal" ? "Barishal" : loc;
+          matchLoc =
+            s.district === loc ||
+            s.district === divKey ||
+            s.division === loc ||
+            s.division === divKey ||
+            (locations[divKey] && !!locations[divKey][s.district]) ||
+            (locations[divKey] && !!locations[divKey][s.location]);
+        }
         const matchRating = s.rating >= filters.minRating;
         const matchAvail = !filters.availableOnly || s.availableNow;
         return matchSearch && matchCat && matchLoc && matchRating && matchAvail;
