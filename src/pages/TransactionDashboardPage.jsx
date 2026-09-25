@@ -102,6 +102,7 @@ export default function TransactionDashboardPage() {
               <option value="ALL">All Types</option>
               <option value="ESCROW">Escrow Only</option>
               <option value="DEPOSIT">Deposits Only</option>
+              <option value="WITHDRAWAL">Withdrawals Only</option>
             </select>
             <button
               onClick={fetchData}
@@ -152,6 +153,8 @@ export default function TransactionDashboardPage() {
                       <div className="flex items-center gap-2">
                         {txn.type === "DEPOSIT" ? (
                           <ArrowDown className="w-4 h-4 text-blue-500" />
+                        ) : txn.type === "WITHDRAWAL" ? (
+                          <ArrowUp className="w-4 h-4 text-red-500" />
                         ) : (
                           <ArrowUp className="w-4 h-4 text-purple-500" />
                         )}
@@ -166,7 +169,11 @@ export default function TransactionDashboardPage() {
                         if (isAdmin) {
                           relatedUser = txn.user || txn.hirer || txn.provider;
                         } else {
-                          relatedUser = (txn.hirer?._id === user.id || txn.hirer?.id === user.id) ? txn.provider : txn.hirer;
+                          if (txn.type === "ESCROW") {
+                            relatedUser = (txn.hirer?._id === user.id || txn.hirer?.id === user.id) ? txn.provider : txn.hirer;
+                          } else {
+                            relatedUser = txn.user; // Will be the user themselves
+                          }
                         }
                         
                         if (relatedUser && (relatedUser._id || relatedUser.id)) {

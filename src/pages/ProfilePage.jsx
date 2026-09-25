@@ -196,7 +196,7 @@ function ProfilePage() {
     // Fetch reviews
     setReviewsLoading(true);
     const controller = new AbortController();
-    getUserReviews(currentUser._id, controller.signal)
+    getUserReviews(currentUser.id || currentUser._id, controller.signal)
       .then((data) => {
         if (data?.reviews) {
           setReviews(data.reviews);
@@ -434,7 +434,7 @@ function ProfilePage() {
                 <div className="flex items-center gap-1.5 text-amber-500 mt-1">
                   <Star className="h-5 w-5 fill-amber-500" />
                   <span className="text-lg font-bold text-slate-700">
-                    {currentUser?.profile?.hirerRating > 0 ? currentUser.profile.hirerRating.toFixed(1) : "New"}
+                    {currentUser?.profile?.hirerRating > 0 ? currentUser.profile.hirerRating.toFixed(1) : "0.0"}
                   </span>
                 </div>
                 <span className="text-xs text-slate-400 mt-0.5">{currentUser?.profile?.hirerReviews || 0} reviews</span>
@@ -444,7 +444,7 @@ function ProfilePage() {
                 <div className="flex items-center gap-1.5 text-amber-500 mt-1">
                   <Star className="h-5 w-5 fill-amber-500" />
                   <span className="text-lg font-bold text-slate-700">
-                    {currentUser?.profile?.providerRating > 0 ? currentUser.profile.providerRating.toFixed(1) : "New"}
+                    {currentUser?.profile?.providerRating > 0 ? currentUser.profile.providerRating.toFixed(1) : "0.0"}
                   </span>
                 </div>
                 <span className="text-xs text-slate-400 mt-0.5">{currentUser?.profile?.providerReviews || 0} reviews</span>

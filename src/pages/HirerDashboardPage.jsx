@@ -16,6 +16,7 @@ import {
   acceptJobProposal,
   rejectJobProposal,
   submitReview,
+  updateReview,
   getJobReviews,
   releaseJobPayment,
 } from "../services/api.js";
@@ -349,19 +350,38 @@ function HirerDashboardPage() {
     }
   }
 
+  const [isEditingReview, setIsEditingReview] = useState(false);
+  const [editReviewId, setEditReviewId] = useState(null);
+
   async function handleOpenReview(job) {
     try {
       const res = await getJobReviews(job.id);
-      if (res.hasReviewed) {
+      
+      const myReview = res.myReview;
+      const hasReviewed = res.hasReviewed;
+
+      if (myReview || hasReviewed) {
         setReviewedJobs((prev) => new Set(prev).add(job.id));
-        showSuccess("You have already reviewed this job.");
-        return;
+        setReviewJob(job);
+        setReviewRating(myReview?.rating || 0);
+        setReviewComment(myReview?.comment || "");
+        setIsEditingReview(true);
+        setEditReviewId(myReview?._id || null);
+      } else {
+        setReviewJob(job);
+        setReviewRating(0);
+        setReviewComment("");
+        setIsEditingReview(false);
+        setEditReviewId(null);
       }
+    } catch (err) {
+      showError("Failed to check review status.");
+      // Fallback: still open it so they can try, but it might fail if they already reviewed
       setReviewJob(job);
       setReviewRating(0);
       setReviewComment("");
-    } catch (err) {
-      showError("Failed to check review status.");
+      setIsEditingReview(false);
+      setEditReviewId(null);
     }
   }
 
@@ -373,11 +393,19 @@ function HirerDashboardPage() {
     }
     setIsSubmittingReview(true);
     try {
-      await submitReview(reviewJob.id, {
-        rating: reviewRating,
-        comment: reviewComment,
-      });
-      showSuccess("Review submitted successfully!");
+      if (isEditingReview) {
+        await updateReview(reviewJob.id, {
+          rating: reviewRating,
+          comment: reviewComment,
+        });
+        showSuccess("Review updated successfully!");
+      } else {
+        await submitReview(reviewJob.id, {
+          rating: reviewRating,
+          comment: reviewComment,
+        });
+        showSuccess("Review submitted successfully!");
+      }
       setReviewedJobs((prev) => new Set(prev).add(reviewJob.id));
       setReviewJob(null);
     } catch (err) {
@@ -720,10 +748,14 @@ function HirerDashboardPage() {
                         String(job.status),
                       ) &&
                         (job.hasReviewed || reviewedJobs.has(job.id)) && (
-                          <span className="flex items-center gap-2 rounded-2xl bg-slate-100 px-5 py-3 text-xs font-bold text-slate-500">
-                            <CheckCircle className="h-4 w-4" />
-                            Reviewed
-                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenReview(job)}
+                            className="flex items-center gap-2 rounded-2xl bg-slate-100 px-5 py-3 text-xs font-bold text-slate-600 shadow-sm transition hover:bg-slate-200 active:scale-[0.98]"
+                          >
+                            <CheckCircle className="h-4 w-4 text-emerald-500" />
+                            Edit Review
+                          </button>
                         )}
                     </div>
                   </div>
@@ -736,7 +768,7 @@ function HirerDashboardPage() {
 
       {/* Applicant Tracking Slide-Over Modal / Side Panel */}
       {selectedJob && createPortal((
-        <div className="fixed inset-0 z-[100] flex justify-end bg-slate-900/40 backdrop-blur-md transition-all duration-500 animate-in fade-in">
+        <div className="fixed inset-0 z-[9999] flex justify-end bg-slate-900/40 backdrop-blur-md transition-all duration-500 animate-in fade-in">
           <div
             className="fixed inset-0"
             onClick={() => {

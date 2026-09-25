@@ -500,7 +500,33 @@ function ChatPage() {
     emitTyping(activeChatId, false);
 
     try {
-      await sendMessage(activeChatId, text);
+      const response = await sendMessage(activeChatId, text);
+      const newMsg = response?.message || response;
+      
+      if (newMsg && newMsg._id) {
+        setMessages((prev) => {
+          if (prev.some((m) => m._id === newMsg._id)) return prev;
+          return [...prev, newMsg];
+        });
+        
+        // Update the conversation sidebar snippet
+        setConversations((prev) =>
+          prev.map((conv) => {
+            if ((conv.id || conv.chatId) === activeChatId) {
+              return {
+                ...conv,
+                lastMessage: {
+                  body: newMsg.body,
+                  senderId: currentUser?.id,
+                  createdAt: newMsg.createdAt || new Date().toISOString(),
+                },
+                updatedAt: newMsg.createdAt || new Date().toISOString(),
+              };
+            }
+            return conv;
+          }).sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0))
+        );
+      }
     } catch (err) {
       showError(err.message || "Failed to send message");
       setMessageText(text); // restore on error

@@ -33,6 +33,7 @@ export default function PublicProfilePage() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [reviewTab, setReviewTab] = useState("PROVIDER");
 
   useEffect(() => {
     async function fetchProfileData() {
@@ -97,8 +98,11 @@ export default function PublicProfilePage() {
 
   const { profile } = user;
   const isProvider = user.activeMode === "PROVIDER";
-  const displayRating = isProvider ? profile.rating : profile.hirerRating;
-  const displayReviews = isProvider ? profile.reviews : profile.hirerReviews;
+  
+  const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
+  const displayRating = reviews.length > 0 ? totalRating / reviews.length : 0;
+  const displayReviews = reviews.length;
+  const filteredReviews = reviews.filter((r) => r.role === (reviewTab === "PROVIDER" ? "HIRER_TO_PROVIDER" : "PROVIDER_TO_HIRER"));
 
   return (
     <div className="min-h-screen bg-slate-50 pt-8 pb-20">
@@ -209,11 +213,11 @@ export default function PublicProfilePage() {
                       <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
                         <Star className="w-5 h-5 text-blue-600 fill-current" />
                       </div>
-                      <h4 className="text-sm font-bold text-slate-600 uppercase tracking-wider">Rating</h4>
+                      <h4 className="text-sm font-bold text-slate-600 uppercase tracking-wider">Overall Rating</h4>
                     </div>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-4xl font-extrabold text-slate-900">{displayRating > 0 ? displayRating.toFixed(1) : "New"}</span>
-                      {displayRating > 0 && <span className="text-slate-500 font-medium">({displayReviews} reviews)</span>}
+                      <span className="text-3xl font-extrabold text-slate-900">{displayRating > 0 ? displayRating.toFixed(1) : "0.0"}</span>
+                      {displayReviews > 0 && <span className="text-slate-500 font-medium">({displayReviews} reviews)</span>}
                     </div>
                   </div>
 
@@ -225,8 +229,34 @@ export default function PublicProfilePage() {
                       <h4 className="text-sm font-bold text-slate-600 uppercase tracking-wider">Completed</h4>
                     </div>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-4xl font-extrabold text-slate-900">{profile?.completedJobs || 0}</span>
+                      <span className="text-3xl font-extrabold text-slate-900">{profile?.completedJobs || 0}</span>
                       <span className="text-slate-500 font-medium">jobs</span>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gradient-to-br from-indigo-50 to-white rounded-2xl p-5 border border-indigo-100 shadow-sm">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+                        <Star className="w-5 h-5 text-indigo-600 fill-current" />
+                      </div>
+                      <h4 className="text-sm font-bold text-slate-600 uppercase tracking-wider">Hirer Rating</h4>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-extrabold text-slate-900">{profile?.hirerRating > 0 ? profile.hirerRating.toFixed(1) : "0.0"}</span>
+                      <span className="text-slate-500 font-medium">({profile?.hirerReviews || 0} reviews)</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-purple-50 to-white rounded-2xl p-5 border border-purple-100 shadow-sm">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                        <Star className="w-5 h-5 text-purple-600 fill-current" />
+                      </div>
+                      <h4 className="text-sm font-bold text-slate-600 uppercase tracking-wider">Provider Rating</h4>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-extrabold text-slate-900">{profile?.providerRating > 0 ? profile.providerRating.toFixed(1) : "0.0"}</span>
+                      <span className="text-slate-500 font-medium">({profile?.providerReviews || 0} reviews)</span>
                     </div>
                   </div>
                 </div>
@@ -261,14 +291,38 @@ export default function PublicProfilePage() {
 
         {/* Reviews Section */}
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-            <MessageSquare className="w-6 h-6 text-[#0066FF]" /> 
-            Reviews ({reviews.length})
-          </h2>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+              <MessageSquare className="w-6 h-6 text-[#0066FF]" /> 
+              Reviews ({reviews.length})
+            </h2>
+            <div className="flex gap-2 p-1 bg-slate-100 rounded-xl w-fit">
+              <button
+                onClick={() => setReviewTab("PROVIDER")}
+                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                  reviewTab === "PROVIDER"
+                    ? "bg-white text-[#011F50] shadow-sm"
+                    : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                }`}
+              >
+                As Provider
+              </button>
+              <button
+                onClick={() => setReviewTab("HIRER")}
+                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                  reviewTab === "HIRER"
+                    ? "bg-white text-[#011F50] shadow-sm"
+                    : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                }`}
+              >
+                As Hirer
+              </button>
+            </div>
+          </div>
           
-          {reviews.length > 0 ? (
+          {filteredReviews.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {reviews.map((review) => (
+              {filteredReviews.map((review) => (
                 <div 
                   key={review._id} 
                   className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1"

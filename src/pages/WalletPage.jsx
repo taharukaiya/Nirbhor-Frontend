@@ -295,14 +295,31 @@ export default function WalletPage() {
                     value={accountDetails}
                     onChange={(e) => {
                       let val = e.target.value;
-                      if (!val.startsWith("+880") && val.length > 0) {
-                        if (val.startsWith("880")) val = "+" + val;
-                        else if (val.startsWith("0")) val = "+88" + val;
-                        else val = "+880" + val;
+                      
+                      if (val === "" || val === "+") {
+                        setAccountDetails(val);
+                        return;
                       }
+
+                      let digits = val.replace(/\D/g, "");
+
+                      if (digits.startsWith("0")) {
+                        digits = "88" + digits;
+                      } else if (digits.length > 0 && !digits.startsWith("8")) {
+                        digits = "880" + digits;
+                      }
+                      
+                      val = "+" + digits;
+
+                      if (val.length > 14) {
+                        val = val.slice(0, 14);
+                      }
+                      
                       setAccountDetails(val);
                     }}
                     placeholder="+8801700000000"
+                    pattern="^\+880\d{10}$"
+                    title="Account number must be +880 followed by exactly 10 digits"
                     className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none transition focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20"
                     required
                   />
