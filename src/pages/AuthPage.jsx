@@ -81,14 +81,7 @@ function AuthPage() {
         })
         : await signIn({ email: form.email, password: form.password });
 
-      const userRole =
-        session?.user?.role || session?.role || form.role || "HIRER";
-      const destination =
-        userRole === "SERVICE_PROVIDER" ||
-          userRole === "WORKER" ||
-          userRole === "FREELANCER"
-          ? "/jobs"
-          : "/services";
+      const destination = "/";
 
       showSuccess(
         isRegister
