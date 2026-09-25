@@ -20,6 +20,7 @@ import {
   releaseJobPayment,
 } from "../services/api.js";
 import { useEffect, useState, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../contexts/useAuth.js";
 import { useToast } from "../contexts/ToastContext.jsx";
@@ -734,7 +735,7 @@ function HirerDashboardPage() {
       </div>
 
       {/* Applicant Tracking Slide-Over Modal / Side Panel */}
-      {selectedJob && (
+      {selectedJob && createPortal((
         <div className="fixed inset-0 z-[100] flex justify-end bg-slate-900/40 backdrop-blur-md transition-all duration-500 animate-in fade-in">
           <div
             className="fixed inset-0"
@@ -981,10 +982,10 @@ function HirerDashboardPage() {
             </div>
           </aside>
         </div>
-      )}
+      ), document.body)}
 
       {/* Delete Confirmation Modal */}
-      {jobToDelete && (
+      {jobToDelete && createPortal(
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm transition-opacity">
           <div className="w-full max-w-sm transform overflow-hidden rounded-3xl bg-white p-6 shadow-2xl transition-all">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
@@ -1024,7 +1025,7 @@ function HirerDashboardPage() {
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
 
       {/* Payment Modal */}
       <PaymentModal
@@ -1036,7 +1037,7 @@ function HirerDashboardPage() {
       />
 
       {/* Review Modal */}
-      {reviewJob && (
+      {reviewJob && createPortal(
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm transition-opacity">
           <div className="w-full max-w-md transform overflow-hidden rounded-3xl bg-white p-6 shadow-2xl transition-all">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
@@ -1114,7 +1115,7 @@ function HirerDashboardPage() {
             </form>
           </div>
         </div>
-      )}
+      , document.body)}
       {reportJob && (
         <ReportModal job={reportJob} onClose={() => setReportJob(null)} />
       )}

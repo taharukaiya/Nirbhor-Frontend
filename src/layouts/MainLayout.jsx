@@ -9,13 +9,11 @@
  * - Implements Framer Motion `AnimatePresence` to orchestrate smooth page transitions 
  *   as users navigate between routes.
  */
-import { Outlet, useLocation } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { Outlet } from "react-router-dom";
 import Header from "../components/Header.jsx";
 import Footer from "../components/Footer.jsx";
 
 function MainLayout() {
-  const location = useLocation();
   
   return (
     <div className="min-h-screen min-w-0 overflow-x-hidden overflow-y-auto bg-slate-50 text-slate-900 relative">
@@ -37,18 +35,8 @@ function MainLayout() {
 
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
-        <main className="flex-1 pt-2 pb-0">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={location.pathname}
-              initial={{ opacity: 0, y: 15, scale: 0.99 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -15, scale: 0.99 }}
-              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <Outlet />
-            </motion.div>
-          </AnimatePresence>
+        <main className="flex-1 pt-20 pb-8">
+          <Outlet />
         </main>
         <Footer />
       </div>

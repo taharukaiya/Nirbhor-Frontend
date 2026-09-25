@@ -9,6 +9,7 @@
  * - Inline Components: Encapsulates the `ReviewModal` locally for submitting feedback on completed jobs.
  */
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/useAuth.js";
 import { useToast } from "../contexts/ToastContext.jsx";
@@ -59,7 +60,7 @@ function ReviewModal({ job, onClose, onSuccess }) {
     }
   }
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
       <div className="w-full max-w-md overflow-hidden rounded-3xl glass-panel shadow-2xl">
         <div className="border-b border-slate-100 px-6 py-5 bg-white/40">
@@ -125,7 +126,7 @@ function ReviewModal({ job, onClose, onSuccess }) {
         </form>
       </div>
     </div>
-  );
+  , document.body);
 }
 
 export default function ProviderDashboardPage() {

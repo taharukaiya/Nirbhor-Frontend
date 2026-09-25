@@ -261,7 +261,7 @@ function Header() {
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled || !isHome
-        ? "bg-white/90 shadow-sm backdrop-blur-xl border-b border-slate-200"
+        ? "bg-white/70 shadow-sm backdrop-blur-md border-b border-white/20"
         : "bg-transparent py-2"
         }`}
     >
