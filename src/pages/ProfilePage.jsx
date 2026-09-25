@@ -1,3 +1,14 @@
+/**
+ * @file ProfilePage.jsx
+ * @description Unified profile management interface for both Hirers and Service Providers.
+ *
+ * Architectural Intent:
+ * - Role-Based Rendering: Conditionally renders fields (like hourly rate, availability, category) based on whether the user is in Service Provider mode.
+ * - Complex Form State: Manages deeply nested form states (e.g., location with division/district cascades) and bespoke time selection inputs.
+ * - File Uploading: Implements drag-and-drop avatar uploading with base64 conversion before dispatching to the API.
+ * - Security Integration: Provides inline password changing mechanisms that securely invalidate other active sessions upon success.
+ * - Data Aggregation: Fetches and displays reviews categorized by the user's role interactions (Provider vs Hirer).
+ */
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/useAuth.js";

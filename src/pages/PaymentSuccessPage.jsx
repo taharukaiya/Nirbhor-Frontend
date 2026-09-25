@@ -1,3 +1,11 @@
+/**
+ * @file PaymentSuccessPage.jsx
+ * @description Callback page for successful payment gateway transactions.
+ *
+ * Architectural Intent:
+ * - Query Parameter Parsing: Extracts `tran_id` from the URL to confirm transaction success.
+ * - Redirection: Guides users back to their dashboard to view updated job/payment statuses.
+ */
 import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { CheckCircle, ArrowRight } from "../components/ui/Icons.jsx";

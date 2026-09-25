@@ -1,3 +1,13 @@
+/**
+ * AdminAuditLogsPage
+ * 
+ * Architectural Intent:
+ * RBAC-protected administrative view for managing and overseeing platform auditlogs.
+ * Integrates directly with the `adminApi.js` service to perform privileged mutations (e.g., bans, approvals, deletions).
+ * 
+ * Security:
+ * Strictly enclosed by the `<AdminRoute>` wrapper. Requires a valid Admin JWT and specific RBAC permissions matrix.
+ */
 import { useEffect, useState } from "react";
 import { getAuditLogs } from "../../services/adminApi.js";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle.js";

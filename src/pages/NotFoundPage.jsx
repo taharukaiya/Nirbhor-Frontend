@@ -1,3 +1,11 @@
+/**
+ * @file NotFoundPage.jsx
+ * @description Global 404 error page and React Router error boundary fallback.
+ *
+ * Architectural Intent:
+ * - Error Handling: Uses `useRouteError` to display specific routing or runtime errors if caught by the boundary.
+ * - Responsive UI: Provides a styled, friendly interface to redirect lost users back to main application flows.
+ */
 import { Link, useRouteError } from "react-router-dom";
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import { useTranslation } from "react-i18next";

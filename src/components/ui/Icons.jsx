@@ -1,7 +1,15 @@
 /**
- * Icons — lightweight inline SVG icon library.
- * All icons are 24×24 viewBox by default, styled with currentColor.
- * Pass className for size overrides, e.g. className="h-5 w-5"
+ * Global Iconography Library
+ * 
+ * Architectural Intent:
+ * A centralized, dependency-free SVG icon system for the frontend.
+ * 
+ * Rationale:
+ * By maintaining our own lightweight, inline SVG functions instead of importing a heavy 
+ * icon library bundle (like FontAwesome or full Lucide-React), we significantly reduce 
+ * the initial JavaScript payload size.
+ * 
+ * All icons inherit the `currentColor` stroke, automatically matching their parent's text color.
  */
 
 const defaults = { xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" };

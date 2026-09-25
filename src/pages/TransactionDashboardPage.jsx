@@ -5,6 +5,18 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/useAuth.js";
 import { TransactionVolumeChart, RevenueChart } from "../components/AnalyticsCharts";
 
+/**
+ * ARCHITECTURAL INTENT:
+ * TransactionDashboardPage provides a unified financial ledger view.
+ * It serves two roles depending on the authenticated user's role:
+ * 1. Admin: Sees platform-wide transaction volume, revenue analytics, and all transactions.
+ * 2. User (Hirer/Provider): Sees personal transaction history (deposits, escrows).
+ * 
+ * STATE MANAGEMENT:
+ * - Determines API endpoint dynamically based on `isAdmin`.
+ * - `filterType`: Controls query params to filter by ALL, ESCROW, or DEPOSIT.
+ * - Fetches analytics data specifically for Admins to feed Recharts components.
+ */
 export default function TransactionDashboardPage() {
   const { currentUser: user } = useAuth();
   const isAdmin = user?.role === "admin";

@@ -1,5 +1,15 @@
 /**
- * Authentication context boundary for the application.
+ * Authentication Context Boundary
+ * 
+ * Architectural Intent:
+ * Centralized state manager for the standard user session (Hirer/Provider).
+ * Manages the UI reflection of the secure HTTP-Only cookie auth system.
+ * 
+ * Logic:
+ * - Restores session on initial load.
+ * - `attemptSilentRefresh`: Automatically intercepts 401 errors during `getSession` 
+ *   and attempts a background token refresh to prevent jarring logouts.
+ * - Disconnects real-time WebSockets on `signOut`.
  */
 
 import { useEffect, useState, useCallback } from "react";

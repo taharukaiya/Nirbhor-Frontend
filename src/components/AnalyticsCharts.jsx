@@ -1,3 +1,16 @@
+/**
+ * Analytics Charts Widget
+ * 
+ * Architectural Intent:
+ * A reusable visualization module utilizing `recharts` to render interactive data representations.
+ * 
+ * Components:
+ * - `TransactionVolumeChart`: Renders a smooth AreaChart representing transaction flow over time.
+ * - `RevenueChart`: Renders a BarChart illustrating platform fee accumulation.
+ * 
+ * Both components internally memoize data transformations (`useMemo`) to format dates efficiently 
+ * without re-calculating on every render cycle.
+ */
 import { useMemo } from "react";
 import {
   AreaChart,

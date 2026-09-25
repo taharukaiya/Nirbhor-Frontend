@@ -1,3 +1,15 @@
+/**
+ * Generic Confirmation Modal
+ * 
+ * Architectural Intent:
+ * A highly reusable UI primitive for interrupting dangerous or consequential user actions
+ * (e.g., deletions, final submissions) to ask for explicit confirmation.
+ * 
+ * Features:
+ * - Supports a "destructive" mode which styles the confirmation action prominently in red.
+ * - Prevents background clicks from bypassing the confirmation implicitly, requiring 
+ *   explicit `onConfirm` or `onClose` resolution.
+ */
 import React from "react";
 import { X, AlertTriangle } from "lucide-react";
 

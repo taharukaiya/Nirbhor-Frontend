@@ -6,6 +6,19 @@ import { CreditCard, ArrowUpRight, ArrowDownRight, Clock, X } from "lucide-react
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import { useTranslation } from "react-i18next";
 
+/**
+ * ARCHITECTURAL INTENT:
+ * WalletPage is the central hub for a user's financial interactions.
+ * It displays current available balance, transaction history (ledger), 
+ * and handles interactions for Depositing (via SSLCommerz) and Withdrawing funds.
+ * 
+ * STATE MANAGEMENT:
+ * - `balance` & `ledger`: Populated via `getWalletData` on mount.
+ * - Modal States: Manages isolated state for deposit and withdrawal flows (amounts, methods, account details).
+ * - Async API integration dynamically lazy-loads specific actions (`requestWithdrawal`, `initiateWalletDeposit`) 
+ *   to keep the initial bundle lighter until needed.
+ */
+
 export default function WalletPage() {
   useDocumentTitle("Wallet");
   const { t } = useTranslation();

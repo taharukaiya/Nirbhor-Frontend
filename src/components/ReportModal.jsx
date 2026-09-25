@@ -1,3 +1,13 @@
+/**
+ * Issue Reporting / Dispute Modal
+ * 
+ * Architectural Intent:
+ * A standardized form interface for capturing user-submitted reports and disputes against specific jobs.
+ * 
+ * Logic:
+ * - Manages local UI validation before delegating submission to the `reportDispute` API service.
+ * - Integrates with `ToastContext` for asynchronous feedback on submission success or failure.
+ */
 import { useState } from "react";
 import { X, AlertCircle } from "./ui/Icons.jsx";
 import { useToast } from "../contexts/ToastContext.jsx";

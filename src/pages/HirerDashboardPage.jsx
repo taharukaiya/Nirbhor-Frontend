@@ -1,3 +1,13 @@
+/**
+ * @file HirerDashboardPage.jsx
+ * @description Central management hub for Hirers to track jobs, view applications, and manage payments.
+ *
+ * Architectural Intent:
+ * - Data Aggregation: Fetches and consolidates job postings, applicant tracking, and status metrics in a single view.
+ * - Complex State Management: Manages overlapping local states for slide-over panels (applicants), modals (payment, review, report, delete), and list filtering.
+ * - Workflow Orchestration: Controls the complete lifecycle of a job post from OPEN -> IN_PROGRESS -> PAYMENT_PENDING -> COMPLETED.
+ * - Component Delegation: Relies on `PaymentModal` and `ReportModal` to handle specific sub-flows without cluttering the main dashboard state.
+ */
 import {
   getHirerJobs,
   getJobApplicants,

@@ -1,3 +1,13 @@
+/**
+ * AdminAccountActionPage
+ * 
+ * Architectural Intent:
+ * RBAC-protected administrative view for managing and overseeing platform accountaction.
+ * Integrates directly with the `adminApi.js` service to perform privileged mutations (e.g., bans, approvals, deletions).
+ * 
+ * Security:
+ * Strictly enclosed by the `<AdminRoute>` wrapper. Requires a valid Admin JWT and specific RBAC permissions matrix.
+ */
 import { useDocumentTitle } from "../../hooks/useDocumentTitle.js";
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";

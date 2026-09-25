@@ -1,3 +1,16 @@
+/**
+ * Secure Payment Gateway Modal
+ * 
+ * Architectural Intent:
+ * An encapsulated, isolated overlay (rendered via `createPortal` to avoid z-index/overflow clipping) 
+ * for initiating job payments.
+ * 
+ * Business Logic:
+ * - Calculates the 5% platform fee dynamically based on the requested amount.
+ * - Offers a bifurcated strategy: 
+ *   1. SSLCommerz: Initiates an external redirection flow.
+ *   2. Nirbhor Wallet: Processes an immediate internal ledger deduction.
+ */
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { X, CreditCard, Lock, Loader2, ShieldCheck } from "./ui/Icons.jsx";

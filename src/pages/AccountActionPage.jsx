@@ -1,3 +1,13 @@
+/**
+ * @file AccountActionPage.jsx
+ * @description Handles account recovery and verification flows (forgot password, reset password, email verification).
+ *
+ * Architectural Intent:
+ * - Centralizes multiple related but distinct flows (forgot, reset, verify) into a single component based on route matching.
+ * - Extracts token from URL parameters seamlessly to submit verification or reset requests.
+ * - Manages discrete UI states (working, error, success messages) consistently across all three flows.
+ * - Prioritizes secure feedback, avoiding leaking account existence information inherently in UI (relies on API responses).
+ */
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";

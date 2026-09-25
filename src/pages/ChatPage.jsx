@@ -1,3 +1,14 @@
+/**
+ * @file ChatPage.jsx
+ * @description Real-time messaging interface for negotiations between Hirers and Service Providers.
+ *
+ * Architectural Intent:
+ * - WebSocket Integration: Connects to Socket.io backend to receive real-time messages, read receipts, and typing indicators.
+ * - State Synchronization: Merges HTTP-fetched initial chat history with live WebSocket events, ensuring zero duplicate messages.
+ * - Complex UI Layout: Implements a responsive dual-pane layout (sidebar for conversation list, main pane for active thread).
+ * - Component Delegation: Extracts repetitive or complex UI blocks (`ReportModal`, `MessageBubble`) to keep the main component readable.
+ * - Safety & Moderation: Integrates in-app reporting of specific messages directly to the admin queue.
+ */
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { useParams, useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "../contexts/useAuth.js";

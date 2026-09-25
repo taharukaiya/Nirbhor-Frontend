@@ -1,3 +1,14 @@
+/**
+ * Global Application Footer
+ * 
+ * Architectural Intent:
+ * The persistent bottom chrome for the public site, providing universal navigation links,
+ * social media outbound paths, and platform legal disclaimers.
+ * 
+ * Features:
+ * - Uses `react-i18next` for potential multi-language support on all static text.
+ * - Organized in a responsive CSS Grid layout that degrades gracefully on mobile viewports.
+ */
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import logo2 from "../assets/logo2.png";

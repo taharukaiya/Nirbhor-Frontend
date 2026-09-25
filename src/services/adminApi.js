@@ -1,3 +1,15 @@
+/**
+ * Admin API Client Layer
+ * 
+ * Architectural Intent:
+ * Encapsulates all administrative network requests. Segregating these from `api.js` 
+ * ensures that standard users don't download admin-specific endpoints in their bundle, 
+ * and centralizes admin error handling.
+ * 
+ * Reliability:
+ * - Implements `fetchWithRetry`: Automatically retries requests when the backend 
+ *   returns a 503 (often happens immediately after cold starts or container spin-ups).
+ */
 const API_BASE_URL = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
 const API_BASE = `${API_BASE_URL}/admin`;
 

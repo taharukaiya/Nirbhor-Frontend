@@ -1,3 +1,17 @@
+/**
+ * Global Navigation Header
+ * 
+ * Architectural Intent:
+ * The core navigational hub and primary interactive shell for the client-side application.
+ * 
+ * Features & Logic:
+ * - **State Syncing**: Connects directly to `SocketService` (`initSocket`, `onNewMessage`, `onNewNotification`) 
+ *   to maintain real-time unread badges without constant polling.
+ * - **RBAC Driven**: Dynamically adjusts navigation links and dropdown options based on whether 
+ *   the user is unauthenticated, or in "HIRER" vs "SERVICE_PROVIDER" modes.
+ * - **Visual Polish**: Implements a sticky scroll-spy effect (`scrolled` state) that transitions 
+ *   from a transparent overlay on hero sections to a frosted glass header.
+ */
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";

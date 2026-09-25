@@ -6,6 +6,18 @@ import { createJob } from "../services/api.js";
 import { locations } from "../data/locations.js";
 import { useTranslation } from "react-i18next";
 
+/**
+ * ARCHITECTURAL INTENT:
+ * PostJobPage handles the creation of a new job/service request by a Hirer.
+ * It features a comprehensive form capturing job details, hierarchical location data (division -> district -> thana),
+ * budget constraints, and skill requirements.
+ * 
+ * STATE MANAGEMENT:
+ * - `form`: A complex nested object managing all form fields. 
+ * - Location State: Hierarchical selection updates dynamically reset child fields (e.g., changing division resets district/thana).
+ * - `categories`: Loaded asynchronously on mount using `getCategories` from the API.
+ * - Validation: Performed before submission ensuring minimum viable job details and budget integrity.
+ */
 // Removed hardcoded categories
 
 const INITIAL_FORM = {

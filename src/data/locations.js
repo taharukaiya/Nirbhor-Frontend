@@ -1,3 +1,12 @@
+/**
+ * Location Data Dictionary
+ * 
+ * Architectural Intent:
+ * A static, hierarchical representation of Bangladesh's geographical divisions, 
+ * districts, and sub-districts (upazilas/thanas).
+ * Used by cascading dropdowns in profile creation, job posting, and search filtering 
+ * to provide a rigid, standardized location taxonomy that prevents free-text entry errors.
+ */
 export const locations = {
   "Dhaka": {
     "Dhaka": ["Dhanmondi", "Gulshan", "Banani", "Mirpur", "Uttara", "Mohammadpur", "Badda"],

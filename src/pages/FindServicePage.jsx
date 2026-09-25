@@ -1,3 +1,14 @@
+/**
+ * @file FindServicePage.jsx
+ * @description Primary discovery interface for Hirers to browse and contact Service Providers.
+ *
+ * Architectural Intent:
+ * - Complex Data Fetching: Utilizes `useRemoteList` to fetch service providers dynamically.
+ * - Client-Side Filtering: Implements extensive client-side filtering (category, location, rating, availability) and sorting.
+ * - Lead Generation: Serves as the main entry point to initiate conversations (`handleStartChat`) with providers.
+ * - UI Reusability: Extracts `FilterPanel` and `ServiceCard` for cleaner render methods and potential reuse.
+ * - Responsive Layout: Similar to `FindJobsPage`, uses a sticky sidebar for filters on desktop, with a mobile fallback drawer.
+ */
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getServices, initiateChat, getCategories } from "../services/api.js";

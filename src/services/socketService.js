@@ -1,3 +1,14 @@
+/**
+ * Real-Time Socket Service
+ * 
+ * Architectural Intent:
+ * Manages the singleton Socket.IO client connection for the frontend.
+ * Enables live chat, typing indicators, read receipts, and global push notifications.
+ * 
+ * Features:
+ * - Encapsulates standard event emissions (e.g., `chat:message`) into Promises 
+ *   so UI components can `await` them and handle UI loading states naturally.
+ */
 import { io } from "socket.io-client";
 
 const SOCKET_URL =

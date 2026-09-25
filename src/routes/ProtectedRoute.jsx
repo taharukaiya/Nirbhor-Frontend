@@ -1,3 +1,15 @@
+/**
+ * Authentication Guard Route
+ * 
+ * Architectural Intent:
+ * A layout-level interceptor that prevents unauthenticated users from accessing protected views.
+ * 
+ * Logic:
+ * - Reads `currentUser` and `loading` state from the AuthContext.
+ * - While loading, displays a branded loading skeleton.
+ * - If not authenticated, automatically redirects to `/login` while capturing the 
+ *   attempted location in route `state` (allowing a redirect-back after login).
+ */
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/useAuth.js";
 

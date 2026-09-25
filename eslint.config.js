@@ -1,3 +1,11 @@
+/**
+ * ESLint Configuration
+ * 
+ * Architectural Intent:
+ * Defines the static analysis and linting rules for the React Frontend.
+ * Uses the new ESLint Flat Config format to enforce best practices, catch React Hooks 
+ * dependency array violations, and ensure code consistency.
+ */
 import js from '@eslint/js'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'

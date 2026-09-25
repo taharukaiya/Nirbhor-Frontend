@@ -1,3 +1,15 @@
+/**
+ * Application Router Definition
+ * 
+ * Architectural Intent:
+ * The single source of truth for all client-side routing, utilizing React Router v6's 
+ * Data Router pattern (`createBrowserRouter`).
+ * 
+ * Hierarchy:
+ * 1. `MainLayout`: Public pages and standard authenticated dashboards (`/`).
+ * 2. `AuthLayout`: Chromeless authentication flows (`/login`, `/register`).
+ * 3. `AdminProvider` & `AdminLayout`: The dedicated, RBAC-protected management console (`/admin`).
+ */
 import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout.jsx";
 import AuthLayout from "../layouts/AuthLayout.jsx";
@@ -22,7 +34,7 @@ import TransactionDashboardPage from "../pages/TransactionDashboardPage.jsx";
 import PublicProfilePage from "../pages/PublicProfilePage.jsx";
 
 // Admin Panel Imports
-import { AdminRoute } from "../components/admin/AdminRoute.jsx";
+import { AdminRoute } from "./AdminRoute.jsx";
 import { AdminProvider } from "../contexts/AdminContext.jsx";
 import { AdminLayout } from "../layouts/AdminLayout.jsx";
 import { AdminLoginPage } from "../pages/admin/AdminLoginPage.jsx";

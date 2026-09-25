@@ -1,3 +1,14 @@
+/**
+ * @file HomePage.jsx
+ * @description Landing page of the Nirbhor application.
+ *
+ * Architectural Intent:
+ * - Serves as the primary marketing and entry point, heavily focused on visual aesthetics, animations, and conversion (CTAs).
+ * - Integrates dynamic data fetching (`useRemoteList` for services) to show live statistics (e.g., provider count).
+ * - Implements a custom, lightweight carousel/slider without external heavy dependencies, optimized for performance.
+ * - Employs extensive use of Tailwind CSS for complex gradients, glassmorphism (`backdrop-blur`), and responsive layouts.
+ * - i18n Integration: Fully translates marketing copy via `react-i18next`.
+ */
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";

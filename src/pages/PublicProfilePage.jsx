@@ -15,6 +15,18 @@ import {
   ChevronLeft
 } from "lucide-react";
 
+/**
+ * ARCHITECTURAL INTENT:
+ * PublicProfilePage renders a read-only view of a user's profile, accessible to anyone (authenticated or not).
+ * It aggregates data from two API endpoints (`getPublicUser`, `getUserReviews`) to display
+ * personal information, skills, location, verification status, and historical reviews.
+ * 
+ * STATE MANAGEMENT:
+ * - Uses `Promise.all` in `useEffect` to fetch user details and reviews concurrently.
+ * - `user` & `reviews`: Local state variables caching the fetched data.
+ * - Display logic forks based on the user's `activeMode` (PROVIDER vs HIRER) to show relevant metrics (e.g., `hirerRating` vs `rating`).
+ */
+
 export default function PublicProfilePage() {
   const { id } = useParams();
   const [user, setUser] = useState(null);

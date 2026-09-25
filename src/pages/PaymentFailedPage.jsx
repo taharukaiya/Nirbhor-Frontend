@@ -1,3 +1,11 @@
+/**
+ * @file PaymentFailedPage.jsx
+ * @description Callback page for failed payment gateway transactions.
+ *
+ * Architectural Intent:
+ * - Query Parameter Parsing: Extracts `tran_id` and `reason` from the URL to display specific failure context to the user.
+ * - Redirection: Provides immediate pathways back to the dashboard to retry the transaction.
+ */
 import { useSearchParams, Link } from "react-router-dom";
 import { AlertCircle, ArrowLeft, RefreshCcw } from "../components/ui/Icons.jsx";
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";

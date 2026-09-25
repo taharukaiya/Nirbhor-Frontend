@@ -1,3 +1,14 @@
+/**
+ * Admin Panel Layout
+ * 
+ * Architectural Intent:
+ * Provides the persistent shell (sidebar, top navbar, mobile navigation) for all Admin routes.
+ * 
+ * Features:
+ * - Dynamically renders sidebar navigation based on the current Admin's RBAC permissions.
+ * - Polls or fetches initial badge metrics (Pending Verifications, Disputes, Message Reports).
+ * - Forces dark mode for the Admin subdomain visually separating it from the public app.
+ */
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAdmin } from "../contexts/useAdmin.js";

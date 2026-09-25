@@ -1,3 +1,13 @@
+/**
+ * AdminVerificationsPage
+ * 
+ * Architectural Intent:
+ * RBAC-protected administrative view for managing and overseeing platform verifications.
+ * Integrates directly with the `adminApi.js` service to perform privileged mutations (e.g., bans, approvals, deletions).
+ * 
+ * Security:
+ * Strictly enclosed by the `<AdminRoute>` wrapper. Requires a valid Admin JWT and specific RBAC permissions matrix.
+ */
 import { useEffect, useState } from "react";
 import { getVerifications, reviewNid } from "../../services/adminApi.js";
 import { useToast } from "../../contexts/ToastContext.jsx";

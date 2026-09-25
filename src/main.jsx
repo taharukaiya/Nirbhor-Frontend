@@ -1,3 +1,10 @@
+/**
+ * Entry Point
+ * 
+ * Architectural Intent:
+ * Bootstraps the React application, injecting global contexts (Auth, Admin, Toast) 
+ * and routing infrastructure into the DOM. Also initializes internationalization (i18n).
+ */
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router-dom";

@@ -1,3 +1,14 @@
+/**
+ * Standard User API Client Layer
+ * 
+ * Architectural Intent:
+ * The central network boundary for all standard user operations (Auth, Jobs, Proposals, Wallet).
+ * 
+ * Security & Reliability:
+ * - Intercepts global 401 Unauthorized errors and transparently invokes `/auth/refresh` 
+ *   to rotate tokens in the background, minimizing jarring session drops.
+ * - Includes a generic 503 retry wrapper with exponential backoff for cold starts.
+ */
 const API_BASE_URL = (import.meta.env.VITE_API_URL || "/api").replace(
   /\/$/,
   "",

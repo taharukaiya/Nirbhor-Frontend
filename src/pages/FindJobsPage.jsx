@@ -1,3 +1,14 @@
+/**
+ * @file FindJobsPage.jsx
+ * @description Primary discovery interface for Service Providers to browse and apply to open jobs.
+ *
+ * Architectural Intent:
+ * - Complex Data Fetching: Utilizes `useRemoteList` to fetch job postings dynamically.
+ * - Client-Side Filtering: Implements extensive client-side filtering (category, location, status, budget) and sorting for immediate UI feedback.
+ * - Application Flow: Manages the modal-based application flow (`ApplyModal`) and validates offer amounts against the job's defined budget bounds.
+ * - Mode Switching: Integrates automatic role switching if a Hirer attempts to apply to a job, converting them seamlessly to a Provider mode.
+ * - Responsive Layout: Employs a sticky sidebar for filters on desktop, transitioning to a drawer on mobile.
+ */
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getJobs, applyToJob, switchMode, getMyApplications, getCategories } from "../services/api.js";

@@ -1,3 +1,13 @@
+/**
+ * Generic Remote List Fetcher Hook
+ * 
+ * Architectural Intent:
+ * Abstracts the boilerplate of fetching array data (loading state, error handling, abort controllers).
+ * Designed to be consumed by simple list views to avoid repetitive `useEffect` blocks.
+ * 
+ * Usage:
+ * Pass an async `loader` function that accepts an AbortSignal.
+ */
 import { useEffect, useState } from "react";
 
 export function useRemoteList(loader) {

@@ -1,3 +1,13 @@
+/**
+ * AdminJobsPage
+ * 
+ * Architectural Intent:
+ * RBAC-protected administrative view for managing and overseeing platform jobs.
+ * Integrates directly with the `adminApi.js` service to perform privileged mutations (e.g., bans, approvals, deletions).
+ * 
+ * Security:
+ * Strictly enclosed by the `<AdminRoute>` wrapper. Requires a valid Admin JWT and specific RBAC permissions matrix.
+ */
 import { useEffect, useState, useMemo } from "react";
 import { getAdminJobs } from "../../services/api.js";
 import { getAdminUsers } from "../../services/adminApi.js";

@@ -1,3 +1,15 @@
+/**
+ * Admin Context & Provider
+ * 
+ * Architectural Intent:
+ * Provides a dedicated authentication and RBAC context for the Admin panel.
+ * Segregated from the main user `AuthContext` to support concurrent sessions
+ * (e.g., an Admin can be logged in via `/admin` while testing as a standard user via `/`).
+ * 
+ * Logic:
+ * - On mount, verifies the `admin_refresh_token` session.
+ * - Provides `hasPermission` utility to evaluate granular RBAC flags or SUPER_ADMIN override.
+ */
 import { useEffect, useState } from "react";
 import { AdminContext } from "./useAdmin.js";
 import { adminLogin, adminLogout, getAdminSession } from "../services/adminApi.js";

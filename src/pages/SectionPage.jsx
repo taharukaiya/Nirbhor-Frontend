@@ -8,6 +8,17 @@ import {
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import { useTranslation } from "react-i18next";
 
+/**
+ * ARCHITECTURAL INTENT:
+ * SectionPage is a dynamic marketing/informational page component. 
+ * It serves dual purposes (e.g., "About Nirbhor" and "How it Works") based on the `title` prop.
+ * 
+ * STATE MANAGEMENT / LOCALIZATION:
+ * - Relies heavily on `react-i18next` for localized static copy.
+ * - Uses conditional rendering (`isAbout` boolean derived from `title`) to toggle between 
+ *   showing contact information (About) vs workflow steps (How it Works).
+ */
+
 const workflows = [
   [
     "01",

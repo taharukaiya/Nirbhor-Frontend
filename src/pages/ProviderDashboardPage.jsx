@@ -1,3 +1,13 @@
+/**
+ * @file ProviderDashboardPage.jsx
+ * @description Dashboard for Service Providers to track their job applications and active engagements.
+ *
+ * Architectural Intent:
+ * - Data Fetching & Metrics: Uses `getProviderProposals` to fetch both individual application histories and aggregated metrics (Accepted, Pending, etc.).
+ * - Status Filtering: Client-side filtering mechanism to sort proposals by their lifecycle status.
+ * - Action Delegation: Provides contextual actions (Message, Report, Review) based on the specific status of the job proposal.
+ * - Inline Components: Encapsulates the `ReviewModal` locally for submitting feedback on completed jobs.
+ */
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/useAuth.js";

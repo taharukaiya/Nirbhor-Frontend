@@ -1,3 +1,13 @@
+/**
+ * AdminManagersPage
+ * 
+ * Architectural Intent:
+ * RBAC-protected administrative view for managing and overseeing platform managers.
+ * Integrates directly with the `adminApi.js` service to perform privileged mutations (e.g., bans, approvals, deletions).
+ * 
+ * Security:
+ * Strictly enclosed by the `<AdminRoute>` wrapper. Requires a valid Admin JWT and specific RBAC permissions matrix.
+ */
 import { useEffect, useState } from "react";
 import {
   createAdminManager,

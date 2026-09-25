@@ -1,3 +1,14 @@
+/**
+ * @file AuthPage.jsx
+ * @description Core authentication screen for both Registration and Login.
+ *
+ * Architectural Intent:
+ * - Unified Form Component: Handles both `signIn` and `signUp` intelligently based on the current location pathname (`/login` vs `/register`).
+ * - Form Validation: Implements client-side checks for email formatting, Bangladeshi NID patterns, and Date of Birth validity before dispatching requests.
+ * - Context Integration: Delegates actual authentication logic and token management to `AuthContext` via `useAuth`.
+ * - Role-Based Routing: Determines post-login destination dynamically based on the user's role (e.g., workers go to jobs, hirers go to services).
+ * - i18n Ready: Utilizes `react-i18next` for all textual content to support localization out of the box.
+ */
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, CheckCircle } from "../components/ui/Icons.jsx";

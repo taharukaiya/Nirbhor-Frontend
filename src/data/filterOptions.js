@@ -1,3 +1,11 @@
+/**
+ * Filter Options Dictionary
+ * 
+ * Architectural Intent:
+ * Provides static enumerations for filtering forms across the application.
+ * Centralizing these constants ensures consistency between the job posting forms, 
+ * search filters, and backend validation logic.
+ */
 export const SERVICE_CATEGORIES = [
   "All",
   "Electrician",

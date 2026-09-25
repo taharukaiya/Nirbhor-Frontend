@@ -1,3 +1,14 @@
+/**
+ * Global Toast Notification Context
+ * 
+ * Architectural Intent:
+ * Standardizes the visual presentation and usage of ephemeral notifications (Toasts)
+ * across the application using `react-hot-toast`.
+ * 
+ * UI/UX:
+ * - Implements a glassmorphism base style (`backdropFilter`).
+ * - Exposes easy-to-use semantic wrappers: `showSuccess`, `showError`, `showInfo`.
+ */
 import { createContext, useContext, useMemo } from "react";
 import toast, { Toaster } from "react-hot-toast";
 

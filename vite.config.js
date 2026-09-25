@@ -1,3 +1,16 @@
+/**
+ * Vite Configuration & Build Optimizer
+ * 
+ * Architectural Intent:
+ * Configures the build pipeline and local development server for the Nirbhor Frontend.
+ * 
+ * Features:
+ * - Tailwind v4 integration via `@tailwindcss/vite`.
+ * - Backend Proxying: Routes `/api` and `/socket.io` to the local backend (Port 5001) 
+ *   to bypass CORS issues during development.
+ * - Dependency Optimization: Pre-bundles heavy packages (like recharts) to 
+ *   speed up local server starts and resolve CommonJS/ESM module bridging issues.
+ */
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";

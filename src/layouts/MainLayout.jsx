@@ -1,3 +1,14 @@
+/**
+ * Main Application Layout
+ * 
+ * Architectural Intent:
+ * The primary wrapper for all public and authenticated standard user routes.
+ * Provides the sticky Header, Footer, and global ambient background effects.
+ * 
+ * Features:
+ * - Implements Framer Motion `AnimatePresence` to orchestrate smooth page transitions 
+ *   as users navigate between routes.
+ */
 import { Outlet, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Header from "../components/Header.jsx";

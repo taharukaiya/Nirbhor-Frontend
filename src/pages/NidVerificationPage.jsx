@@ -1,3 +1,11 @@
+/**
+ * @file NidVerificationPage.jsx
+ * @description Identity verification flow for users requiring NID validation.
+ *
+ * Architectural Intent:
+ * - Simple Form Submission: Collects NID number and DOB for backend verification.
+ * - State Management: Handles basic loading, success, and error states directly within the component.
+ */
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";

@@ -1,3 +1,10 @@
+/**
+ * Internationalization Configuration
+ * 
+ * Architectural Intent:
+ * Sets up `react-i18next` for managing localization across the application.
+ * Persists user language preference in `localStorage` to ensure a consistent experience across sessions.
+ */
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import enTranslations from './locales/en/translation.json';

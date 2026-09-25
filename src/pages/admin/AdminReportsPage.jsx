@@ -1,3 +1,13 @@
+/**
+ * AdminReportsPage
+ * 
+ * Architectural Intent:
+ * RBAC-protected administrative view for managing and overseeing platform reports.
+ * Integrates directly with the `adminApi.js` service to perform privileged mutations (e.g., bans, approvals, deletions).
+ * 
+ * Security:
+ * Strictly enclosed by the `<AdminRoute>` wrapper. Requires a valid Admin JWT and specific RBAC permissions matrix.
+ */
 import { useEffect, useState, useMemo } from "react";
 import { getFinancialReports, changeAdminPassword } from "../../services/adminApi.js";
 import { useAdmin } from "../../contexts/useAdmin.js";
