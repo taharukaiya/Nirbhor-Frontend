@@ -109,7 +109,7 @@ function AuthPage() {
           <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#0066FF]">
             {isRegister ? t("auth.registerTitle") : t("auth.signInTitle")}
           </span>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-[#011F50]">
+          <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-[#011F50] sm:text-4xl">
             {isRegister
               ? t("auth.registerSubtitle")
               : t("auth.signInSubtitle")}
@@ -233,7 +233,8 @@ function AuthPage() {
           </>
         )}
         <button
-          className="group flex w-full items-center justify-center gap-2 rounded-xl bg-[#0066FF] px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-[#0066FF]/20 transition hover:bg-[#011F50]"
+          className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#0066FF] to-[#011F50] px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-[#0066FF]/25 transition hover:scale-[1.02] hover:shadow-xl hover:shadow-[#0066FF]/30 active:scale-95 disabled:opacity-70"
+          disabled={submitting}
           type="submit"
         >
           {submitting
@@ -266,7 +267,7 @@ function AuthPage() {
         </Link>
       </div>
 
-      <div className="grid gap-3 border-t border-slate-200 pt-6 text-sm text-slate-600 sm:grid-cols-3">
+      <div className="grid gap-3 border-t border-slate-200 pt-6 text-sm text-slate-600 sm:grid-cols-3 lg:hidden">
         {["NID verification", "Protected payments", "Job-based chat"].map(
           (item) => (
             <span key={item} className="flex items-center gap-2">

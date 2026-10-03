@@ -12,6 +12,7 @@ import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight } from "../components/ui/Icons.jsx";
+import { Mail, Lock } from "lucide-react";
 import { forgotPassword, resetPassword, verifyEmail } from "../services/api.js";
 
 function AccountActionPage() {
@@ -72,7 +73,7 @@ function AccountActionPage() {
           <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#0066FF]">
             Account security
           </span>
-          <h1 className="mt-2 text-3xl font-bold text-[#011F50]">
+          <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-[#011F50] sm:text-4xl">
             {action === "forgot"
               ? "Recover your account."
               : action === "reset"
@@ -93,29 +94,35 @@ function AccountActionPage() {
           {action === "forgot" ? (
             <label className="grid gap-2 text-sm font-semibold text-slate-700">
               Email address
-              <input
-                className="rounded-xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-[#0066FF]"
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                required
-              />
+              <div className="group relative">
+                <input
+                  className="relative z-0 w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 font-normal outline-none transition focus:border-[#0066FF] focus:bg-white focus:ring-4 focus:ring-[#0066FF]/10"
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  required
+                />
+                <Mail className="pointer-events-none absolute inset-y-0 left-4 z-10 my-auto h-5 w-5 text-slate-500 transition-colors group-focus-within:text-[#0066FF]" />
+              </div>
             </label>
           ) : (
             <label className="grid gap-2 text-sm font-semibold text-slate-700">
               New password
-              <input
-                className="rounded-xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-[#0066FF]"
-                type="password"
-                minLength="8"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                required
-              />
+              <div className="group relative">
+                <input
+                  className="relative z-0 w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 font-normal outline-none transition focus:border-[#0066FF] focus:bg-white focus:ring-4 focus:ring-[#0066FF]/10"
+                  type="password"
+                  minLength="8"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  required
+                />
+                <Lock className="pointer-events-none absolute inset-y-0 left-4 z-10 my-auto h-5 w-5 text-slate-500 transition-colors group-focus-within:text-[#0066FF]" />
+              </div>
             </label>
           )}
           <button
-            className="flex items-center justify-center gap-2 rounded-xl bg-[#0066FF] px-5 py-3.5 text-sm font-bold text-white hover:bg-[#011F50]"
+            className="group flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#0066FF] to-[#011F50] px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-[#0066FF]/25 transition hover:scale-[1.02] hover:shadow-xl active:scale-95 disabled:opacity-70"
             disabled={working}
             type="submit"
           >
@@ -124,7 +131,7 @@ function AccountActionPage() {
               : action === "forgot"
                 ? "Send reset link"
                 : "Reset password"}
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </button>
         </form>
       )}

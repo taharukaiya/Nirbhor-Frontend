@@ -101,7 +101,7 @@ function HowItWorksPage() {
   return (
     <div className="relative overflow-hidden text-slate-900">
       {/* ── Hero ── */}
-      <section className="relative isolate overflow-hidden bg-[#011F50] pb-32 pt-16 text-white sm:pb-40 sm:pt-24">
+      <section className="relative isolate overflow-hidden bg-[#011F50] pb-32 pt-32 text-white sm:pb-40 sm:pt-44">
         <div className="pointer-events-none absolute inset-0 -z-10">
           <div className="absolute -left-24 -top-24 h-[28rem] w-[28rem] rounded-full bg-[#0066FF]/40 blur-[110px]" />
           <div className="absolute -right-24 top-1/3 h-[26rem] w-[26rem] rounded-full bg-[#00d4a0]/25 blur-[110px]" />

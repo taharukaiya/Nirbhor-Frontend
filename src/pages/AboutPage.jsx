@@ -59,7 +59,7 @@ function AboutPage() {
   return (
     <div className="relative overflow-hidden text-slate-900">
       {/* ── Hero ── */}
-      <section className="relative isolate overflow-hidden bg-[#011F50] pb-28 pt-16 text-white sm:pb-36 sm:pt-24">
+      <section className="relative isolate overflow-hidden bg-[#011F50] pb-28 pt-32 text-white sm:pb-36 sm:pt-44">
         <div className="pointer-events-none absolute inset-0 -z-10">
           <div className="absolute -right-32 -top-32 h-[32rem] w-[32rem] rounded-full bg-[#0066FF]/40 blur-[120px]" />
           <div className="absolute -bottom-40 -left-24 h-[28rem] w-[28rem] rounded-full bg-[#00d4a0]/25 blur-[110px]" />

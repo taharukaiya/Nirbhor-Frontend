@@ -15,7 +15,9 @@ import Footer from "../components/Footer.jsx";
 
 function MainLayout() {
   const location = useLocation();
-  const isHome = location.pathname === "/";
+  const isHome = ["/", "/about", "/how-it-works"].includes(
+    location.pathname,
+  );
 
   return (
     <div className="min-h-screen min-w-0 overflow-x-hidden bg-slate-50 text-slate-900 relative">

@@ -22,6 +22,7 @@ import {
 } from "../components/ui/Icons.jsx";
 import { useRemoteList } from "../hooks/useRemoteList.js";
 import { getServices } from "../services/api.js";
+import Reveal from "../components/ui/Reveal.jsx";
 import electricianImage from "../assets/worker-slider/electrician.jpg";
 import plumberImage from "../assets/worker-slider/plumber.jpg";
 import driverImage from "../assets/worker-slider/driver.avif";
@@ -80,12 +81,23 @@ function HomePage() {
   return (
     <div className="min-w-0 overflow-hidden bg-slate-50 pb-24 text-slate-900 font-sans selection:bg-[#0066FF]/20 selection:text-[#0066FF]">
       {/* ── Hero Section ── */}
-      <section className="relative min-h-[95vh] overflow-hidden bg-[#011F50] text-white flex flex-col justify-center pt-20">
+      <section className="relative min-h-[88vh] overflow-hidden bg-[#011F50] text-white flex flex-col justify-center pt-32 pb-20">
         {/* Abstract Background Elements */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <div className="absolute -top-[10%] -left-[10%] h-[50vw] w-[50vw] rounded-full bg-gradient-to-br from-[#0066FF]/30 to-purple-600/30 blur-[100px] animate-pulse" style={{ animationDuration: '8s' }} />
           <div className="absolute top-[20%] -right-[10%] h-[40vw] w-[40vw] rounded-full bg-gradient-to-tl from-[#00b3ff]/20 to-teal-400/20 blur-[120px] animate-pulse" style={{ animationDuration: '12s' }} />
           <div className="absolute -bottom-[20%] left-[20%] h-[60vw] w-[60vw] rounded-full bg-gradient-to-tr from-[#0066FF]/10 to-transparent blur-[80px]" />
+          <div className="animate-float absolute left-[8%] top-[28%] h-24 w-24 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-sm rotate-12" />
+          <div className="animate-float absolute right-[10%] bottom-[22%] h-16 w-16 rounded-full border border-[#00d4a0]/30 bg-[#00d4a0]/10 [animation-delay:2s]" />
+          <div className="animate-float absolute right-[22%] top-[18%] h-10 w-10 rounded-xl border border-white/10 bg-[#0066FF]/20 -rotate-12 [animation-delay:4s]" />
+          <div
+            className="absolute inset-0 opacity-[0.07]"
+            style={{
+              backgroundImage:
+                "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)",
+              backgroundSize: "56px 56px",
+            }}
+          />
           <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] mix-blend-overlay"></div>
         </div>
 
@@ -146,7 +158,7 @@ function HomePage() {
 
       {/* ── Showcase Slider ── */}
       <section
-        className="relative -mt-16 z-20 mx-auto w-full max-w-[90rem] px-5 sm:px-8 lg:px-12"
+        className="relative z-20 mx-auto mt-12 w-full max-w-[90rem] px-5 sm:px-8 lg:px-12"
         aria-roledescription="carousel"
         aria-label="Featured"
       >
@@ -177,7 +189,7 @@ function HomePage() {
                 <div className="absolute inset-0 bg-gradient-to-r from-[#011F50]/95 via-[#011F50]/65 to-[#011F50]/10" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#011F50]/85 via-transparent to-[#011F50]/30" />
 
-                <div className="relative flex h-full flex-col justify-end p-7 pb-28 sm:p-12 sm:pb-32 lg:max-w-3xl lg:p-16 lg:pb-32">
+                <div className="relative flex h-full flex-col justify-center px-7 pb-24 pt-20 sm:px-12 sm:pb-28 sm:pt-24 lg:max-w-3xl lg:px-16">
                   <span
                     className={`inline-flex w-fit items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-white backdrop-blur-md ${isActive ? "animate-slide-up" : ""}`}
                   >
@@ -290,10 +302,9 @@ function HomePage() {
         <div className="grid gap-6 relative">
           <div className="absolute -right-10 -bottom-10 h-60 w-60 rounded-full bg-[#0066FF]/5 blur-3xl" />
           {steps.map(([number, title, copy], i) => (
+            <Reveal key={number} delay={i * 120}>
             <article
-              key={number}
               className={`group flex items-start gap-6 rounded-[2rem] border border-slate-200/60 bg-white/80 backdrop-blur-xl p-8 shadow-sm transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-[#0066FF]/5 relative overflow-hidden`}
-              style={{ transform: `translateY(${i * 10}px)` }}
             >
               <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[#00b3ff] to-[#0066FF] opacity-0 transition-opacity group-hover:opacity-100" />
               <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-slate-50 text-xl font-extrabold text-[#0066FF] shadow-inner group-hover:bg-[#0066FF] group-hover:text-white transition-colors duration-300">
@@ -304,13 +315,15 @@ function HomePage() {
                 <p className="mt-3 text-base leading-relaxed text-slate-600 font-medium">{copy}</p>
               </div>
             </article>
+            </Reveal>
           ))}
         </div>
       </section>
 
       {/* ── CTA Sections ── */}
-      <section className="mx-auto mt-40 w-full max-w-[90rem] px-5 sm:px-8 lg:px-12">
+      <Reveal className="mx-auto mt-40 w-full max-w-[90rem] px-5 sm:px-8 lg:px-12">
         <div className="relative overflow-hidden rounded-[3rem] bg-gradient-to-br from-teal-50 to-emerald-50 p-10 sm:p-14 lg:flex lg:items-center lg:justify-between lg:p-20 shadow-xl shadow-teal-900/5 border border-teal-100">
+          <div className="animate-float absolute -left-10 -bottom-10 h-48 w-48 rounded-full bg-[#00d4a0]/20 blur-3xl" />
           <div className="absolute top-0 right-0 h-full w-1/2 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-teal-200/40 via-transparent to-transparent opacity-60" />
           <div className="relative z-10 max-w-2xl">
             <span className="inline-flex w-fit items-center rounded-full bg-teal-100 px-3 py-1 text-xs font-bold uppercase tracking-widest text-teal-800">
@@ -332,11 +345,13 @@ function HomePage() {
             {t("home.ctaViewProviders")} <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
-      </section>
+      </Reveal>
 
-      <section className="mx-auto mt-16 w-full max-w-[90rem] px-5 sm:px-8 lg:px-12">
+      <Reveal delay={150} className="mx-auto mt-16 w-full max-w-[90rem] px-5 sm:px-8 lg:px-12">
         <div className="relative overflow-hidden rounded-[3rem] bg-[#011F50] px-10 py-16 sm:p-20 text-white shadow-2xl shadow-[#011F50]/40 flex flex-col items-center text-center">
           <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 mix-blend-overlay"></div>
+          <div className="absolute inset-0 opacity-[0.06]" style={{ backgroundImage: "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)", backgroundSize: "48px 48px" }} />
+          <div className="animate-float absolute -right-10 -top-10 h-56 w-56 rounded-full bg-[#00d4a0]/25 blur-3xl" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[80%] w-[80%] rounded-full bg-[#0066FF]/20 blur-[100px] pointer-events-none" />
           
           <div className="relative z-10">
@@ -357,7 +372,7 @@ function HomePage() {
             </Link>
           </div>
         </div>
-      </section>
+      </Reveal>
     </div>
   );
 }
