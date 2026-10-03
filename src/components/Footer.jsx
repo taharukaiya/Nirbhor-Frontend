@@ -77,7 +77,8 @@ function Footer() {
   ];
 
   return (
-    <footer className="mt-16 bg-[#011F50]">
+    <footer className="relative mt-16 bg-[#011F50]">
+      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#0066FF] via-[#00b3ff] to-[#00d4a0]" />
       <div className="mx-auto w-11/12 py-14 lg:w-10/12">
         {/* Top grid */}
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_0.7fr_0.7fr_0.7fr]">

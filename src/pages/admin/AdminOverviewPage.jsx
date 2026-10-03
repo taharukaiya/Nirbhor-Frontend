@@ -1,10 +1,10 @@
 /**
  * AdminOverviewPage
- * 
+ *
  * Architectural Intent:
  * RBAC-protected administrative view for managing and overseeing platform overview.
  * Integrates directly with the `adminApi.js` service to perform privileged mutations (e.g., bans, approvals, deletions).
- * 
+ *
  * Security:
  * Strictly enclosed by the `<AdminRoute>` wrapper. Requires a valid Admin JWT and specific RBAC permissions matrix.
  */
@@ -15,7 +15,11 @@ import { useDocumentTitle } from "../../hooks/useDocumentTitle.js";
 
 function fmtDate(date) {
   if (!date) return "—";
-  return new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  return new Date(date).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 export function AdminOverviewPage() {
@@ -56,9 +60,12 @@ export function AdminOverviewPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">System Overview</h1>
-        <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-          Real-time metrics, platform revenue from 5% commission, and recent activity
+        <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">
+          System Overview
+        </h1>
+        <p className="mt-1 text-xs text-yellow-600 dark:text-slate-400">
+          Real-time metrics, platform revenue from 5% commission, and recent
+          activity
         </p>
       </div>
 
@@ -71,7 +78,9 @@ export function AdminOverviewPage() {
             </span>
             <span className="text-xl">👥</span>
           </div>
-          <div className="mt-3 text-3xl font-extrabold text-slate-900 dark:text-white">{stats.totalUsers || 0}</div>
+          <div className="mt-3 text-3xl font-extrabold text-slate-900 dark:text-white">
+            {stats.totalUsers || 0}
+          </div>
           <div className="mt-1 text-[11px] text-emerald-400 font-semibold">
             {stats.nidVerificationRate || 0}% NID Verified
           </div>
@@ -84,7 +93,9 @@ export function AdminOverviewPage() {
             </span>
             <span className="text-xl">💼</span>
           </div>
-          <div className="mt-3 text-3xl font-extrabold text-slate-900 dark:text-white">{stats.activeJobs || 0}</div>
+          <div className="mt-3 text-3xl font-extrabold text-slate-900 dark:text-white">
+            {stats.activeJobs || 0}
+          </div>
           <div className="mt-1 text-[11px] text-slate-600 dark:text-slate-400">
             Out of {stats.totalJobs || 0} total requests
           </div>
@@ -93,16 +104,17 @@ export function AdminOverviewPage() {
         {stats.totalPlatformCommission !== undefined && (
           <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 p-5 shadow-lg">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+              <span className="text-xs font-bold uppercase tracking-wider text-yellow-600 dark:text-slate-400">
                 Platform Revenue (5%)
               </span>
               <span className="text-xl">💰</span>
             </div>
-            <div className="mt-3 text-3xl font-extrabold text-emerald-400">
+            <div className="mt-3 text-3xl font-extrabold text-yellow-400">
               ৳{Number(stats.totalPlatformCommission || 0).toLocaleString()}
             </div>
             <div className="mt-1 text-[11px] text-slate-600 dark:text-slate-400">
-              Gross Volume: ৳{Number(stats.totalGrossPaymentVolume || 0).toLocaleString()}
+              Gross Volume: ৳
+              {Number(stats.totalGrossPaymentVolume || 0).toLocaleString()}
             </div>
           </div>
         )}
@@ -122,7 +134,9 @@ export function AdminOverviewPage() {
               {stats.openDisputes || 0} Disputes
             </span>
           </div>
-          <div className="mt-1 text-[11px] text-slate-600 dark:text-slate-400">Requires administrative review</div>
+          <div className="mt-1 text-[11px] text-slate-600 dark:text-slate-400">
+            Requires administrative review
+          </div>
         </div>
       </div>
 
@@ -133,7 +147,10 @@ export function AdminOverviewPage() {
             <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
               Recent Registrations
             </h2>
-            <Link to="/admin/users" className="text-xs font-bold text-[#0066FF] hover:underline">
+            <Link
+              to="/admin/users"
+              className="text-xs font-bold text-[#0066FF] hover:underline"
+            >
               View All →
             </Link>
           </div>
@@ -150,8 +167,12 @@ export function AdminOverviewPage() {
               <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
                 {recentUsers.map((u) => (
                   <tr key={u._id || u.email}>
-                    <td className="py-2.5 font-semibold text-slate-900 dark:text-white">{u.name}</td>
-                    <td className="py-2.5 text-slate-600 dark:text-slate-400">{u.activeMode || u.role}</td>
+                    <td className="py-2.5 font-semibold text-slate-900 dark:text-white">
+                      {u.name}
+                    </td>
+                    <td className="py-2.5 text-slate-600 dark:text-slate-400">
+                      {u.activeMode || u.role}
+                    </td>
                     <td className="py-2.5">
                       <span
                         className={`rounded px-2 py-0.5 text-[10px] font-bold ${
@@ -163,7 +184,9 @@ export function AdminOverviewPage() {
                         {u.nidVerified ? "VERIFIED" : "UNVERIFIED"}
                       </span>
                     </td>
-                    <td className="py-2.5 text-slate-500 dark:text-slate-400 hidden sm:table-cell">{fmtDate(u.createdAt)}</td>
+                    <td className="py-2.5 text-slate-500 dark:text-slate-400 hidden sm:table-cell">
+                      {fmtDate(u.createdAt)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -177,7 +200,10 @@ export function AdminOverviewPage() {
             <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
               Recent Job Posts
             </h2>
-            <Link to="/admin/jobs" className="text-xs font-bold text-[#0066FF] hover:underline">
+            <Link
+              to="/admin/jobs"
+              className="text-xs font-bold text-[#0066FF] hover:underline"
+            >
               View All →
             </Link>
           </div>
@@ -196,7 +222,9 @@ export function AdminOverviewPage() {
                     <td className="py-2.5 font-semibold text-slate-900 dark:text-white truncate max-w-[150px]">
                       {j.title}
                     </td>
-                    <td className="py-2.5 text-slate-600 dark:text-slate-400">{j.category}</td>
+                    <td className="py-2.5 text-slate-600 dark:text-slate-400">
+                      {j.category}
+                    </td>
                     <td className="py-2.5">
                       <span className="rounded bg-blue-500/20 px-2 py-0.5 text-[10px] font-bold text-blue-300">
                         {j.status}

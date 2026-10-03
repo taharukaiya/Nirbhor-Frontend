@@ -10,10 +10,11 @@
  * - i18n Integration: Fully translates marketing copy via `react-i18next`.
  */
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
+  ArrowLeft,
   ArrowRight,
   CreditCard,
   MessageCircle,
@@ -30,7 +31,7 @@ function HomePage() {
   const { t } = useTranslation();
   const { data: providers, loading } = useRemoteList(getServices);
   const [activeSlide, setActiveSlide] = useState(0);
-  const sliderRef = useRef(null);
+  const [paused, setPaused] = useState(false);
 
   const slides = [
     {
@@ -71,22 +72,10 @@ function HomePage() {
     ["03", t("home.step3Title"), t("home.step3Copy")],
   ];
 
-  useEffect(() => {
-    const timer = window.setInterval(
-      () => setActiveSlide((current) => (current + 1) % slides.length),
-      6000,
-    );
-    return () => window.clearInterval(timer);
-  }, [slides.length]);
-
-  useEffect(() => {
-    const slider = sliderRef.current;
-    if (slider)
-      slider.scrollTo({
-        left: slider.clientWidth * activeSlide,
-        behavior: "smooth",
-      });
-  }, [activeSlide]);
+  const next = () => setActiveSlide((current) => (current + 1) % slides.length);
+  const prev = () =>
+    setActiveSlide((current) => (current - 1 + slides.length) % slides.length);
+  const goTo = (index) => setActiveSlide(index);
 
   return (
     <div className="min-w-0 overflow-hidden bg-slate-50 pb-24 text-slate-900 font-sans selection:bg-[#0066FF]/20 selection:text-[#0066FF]">
@@ -155,65 +144,125 @@ function HomePage() {
         </div>
       </section>
 
-      {/* ── Carousel Section ── */}
-      <section className="relative -mt-16 z-20 mx-auto w-full max-w-[90rem] px-5 sm:px-8 lg:px-12">
-        <div className="min-w-0 overflow-hidden rounded-[2.5rem] border border-white/60 bg-white/40 shadow-[0_20px_80px_-15px_rgba(0,0,0,0.1)] backdrop-blur-3xl">
-          <div
-            ref={sliderRef}
-            className="flex min-w-0 snap-x snap-mandatory overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          >
-            {slides.map((slide) => (
+      {/* ── Showcase Slider ── */}
+      <section
+        className="relative -mt-16 z-20 mx-auto w-full max-w-[90rem] px-5 sm:px-8 lg:px-12"
+        aria-roledescription="carousel"
+        aria-label="Featured"
+      >
+        <div
+          className="group/slider relative isolate h-[34rem] overflow-hidden rounded-[2rem] bg-[#011F50] shadow-[0_30px_90px_-20px_rgba(1,31,80,0.55)] ring-1 ring-white/10 sm:h-[38rem] lg:h-[42rem] lg:rounded-[2.5rem]"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+          onFocus={() => setPaused(true)}
+          onBlur={() => setPaused(false)}
+        >
+          {/* Slides (stacked, cross-fading) */}
+          {slides.map((slide, index) => {
+            const isActive = activeSlide === index;
+            return (
               <article
                 key={slide.title}
-                className="relative min-w-0 basis-full flex-none snap-start overflow-hidden group"
+                aria-hidden={!isActive}
+                aria-roledescription="slide"
+                aria-label={`${index + 1} of ${slides.length}`}
+                className={`absolute inset-0 transition-opacity duration-[900ms] ease-out ${isActive ? "z-10 opacity-100" : "pointer-events-none z-0 opacity-0"}`}
               >
-                <div className="grid min-h-[30rem] lg:min-h-[38rem] lg:grid-cols-[1.2fr_1fr]">
-                  <div className="relative order-2 lg:order-1 overflow-hidden">
-                    <img
-                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105"
-                      src={slide.image}
-                      alt=""
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent lg:block hidden" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent lg:hidden block" />
-                  </div>
-                  <div className="order-1 flex flex-col justify-center p-8 sm:p-12 lg:order-2 lg:p-20 relative z-10 bg-white lg:bg-transparent">
-                    <span className="inline-flex w-fit items-center rounded-full bg-[#0066FF]/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-[#0066FF]">
-                      {slide.tag}
-                    </span>
-                    <h2 className="mt-6 max-w-xl text-3xl font-extrabold leading-[1.1] tracking-tight text-slate-900 sm:text-5xl lg:text-6xl drop-shadow-sm">
-                      {slide.title}
-                    </h2>
-                    <p className="mt-6 max-w-lg text-lg leading-relaxed text-slate-600 font-medium">
-                      {slide.copy}
-                    </p>
-                    <Link
-                      className="mt-10 inline-flex w-fit items-center gap-3 rounded-full bg-[#011F50] px-8 py-4 text-sm font-bold text-white shadow-xl shadow-[#011F50]/20 transition-all hover:scale-105 hover:bg-[#0066FF] hover:shadow-[#0066FF]/30 active:scale-95"
-                      to={slide.to}
-                    >
-                      {slide.action} <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </div>
+                <img
+                  src={slide.image}
+                  alt=""
+                  className={`absolute inset-0 h-full w-full object-cover ${isActive ? "animate-kenburns" : ""}`}
+                />
+                {/* Readability overlays */}
+                <div className="absolute inset-0 bg-gradient-to-r from-[#011F50]/95 via-[#011F50]/65 to-[#011F50]/10" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#011F50]/85 via-transparent to-[#011F50]/30" />
+
+                <div className="relative flex h-full flex-col justify-end p-7 pb-28 sm:p-12 sm:pb-32 lg:max-w-3xl lg:p-16 lg:pb-32">
+                  <span
+                    className={`inline-flex w-fit items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-white backdrop-blur-md ${isActive ? "animate-slide-up" : ""}`}
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#00d4a0]" />
+                    {slide.tag}
+                  </span>
+                  <h2
+                    className={`mt-5 text-3xl font-extrabold leading-[1.08] tracking-tight text-white sm:text-5xl lg:text-6xl ${isActive ? "animate-slide-up [animation-delay:120ms]" : ""}`}
+                  >
+                    {slide.title}
+                  </h2>
+                  <p
+                    className={`mt-5 max-w-xl text-base font-medium leading-relaxed text-white/80 sm:text-lg ${isActive ? "animate-slide-up [animation-delay:240ms]" : ""}`}
+                  >
+                    {slide.copy}
+                  </p>
+                  <Link
+                    tabIndex={isActive ? 0 : -1}
+                    className={`mt-8 inline-flex w-fit items-center gap-3 rounded-full bg-white px-7 py-3.5 text-sm font-bold text-[#011F50] shadow-xl shadow-black/20 transition-all hover:scale-105 hover:bg-[#00d4a0] active:scale-95 ${isActive ? "animate-slide-up [animation-delay:360ms]" : ""}`}
+                    to={slide.to}
+                  >
+                    {slide.action} <ArrowRight className="h-4 w-4" />
+                  </Link>
                 </div>
               </article>
+            );
+          })}
+
+          {/* Story-style progress bars (the active one drives autoplay) */}
+          <div className="absolute inset-x-6 top-6 z-20 flex gap-2 sm:inset-x-10 sm:top-8">
+            {slides.map((slide, index) => (
+              <button
+                key={slide.title}
+                type="button"
+                aria-label={`Show slide ${index + 1}`}
+                aria-current={activeSlide === index}
+                onClick={() => goTo(index)}
+                className="group/bar relative h-6 flex-1 cursor-pointer"
+              >
+                <span className="absolute inset-x-0 top-1/2 h-[3px] -translate-y-1/2 overflow-hidden rounded-full bg-white/25 transition-all group-hover/bar:h-[5px]">
+                  <span
+                    key={`${index}-${activeSlide}`}
+                    onAnimationEnd={index === activeSlide ? next : undefined}
+                    style={{ animationPlayState: paused ? "paused" : "running" }}
+                    className={`block h-full rounded-full bg-white ${
+                      index < activeSlide
+                        ? "w-full"
+                        : index === activeSlide
+                          ? "animate-progress"
+                          : "w-0"
+                    }`}
+                  />
+                </span>
+              </button>
             ))}
           </div>
-          <div className="flex items-center justify-between border-t border-slate-200/50 bg-white/50 px-8 py-5 backdrop-blur-md">
-            <div className="flex gap-3">
-              {slides.map((slide, index) => (
-                <button
-                  key={slide.title}
-                  type="button"
-                  aria-label={`Show slide ${index + 1}`}
-                  aria-pressed={activeSlide === index}
-                  onClick={() => setActiveSlide(index)}
-                  className={`h-2.5 rounded-full transition-all duration-500 ${activeSlide === index ? "w-10 bg-[#0066FF]" : "w-2.5 bg-slate-300 hover:bg-slate-400"}`}
-                />
-              ))}
+
+          {/* Bottom controls */}
+          <div className="absolute inset-x-6 bottom-6 z-20 flex items-center justify-between sm:inset-x-10 sm:bottom-8">
+            <div className="flex items-baseline gap-1 font-bold text-white tabular-nums">
+              <span className="text-3xl sm:text-4xl">
+                {String(activeSlide + 1).padStart(2, "0")}
+              </span>
+              <span className="text-sm text-white/50">
+                / {String(slides.length).padStart(2, "0")}
+              </span>
             </div>
-            <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
-              {t("home.swipeOrClick")}
-            </span>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={prev}
+                aria-label="Previous slide"
+                className="flex h-12 w-12 items-center justify-center rounded-full border border-white/25 bg-white/10 text-white backdrop-blur-md transition hover:bg-white hover:text-[#011F50] active:scale-95"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+              <button
+                type="button"
+                onClick={next}
+                aria-label="Next slide"
+                className="flex h-12 w-12 items-center justify-center rounded-full border border-white/25 bg-white/10 text-white backdrop-blur-md transition hover:bg-white hover:text-[#011F50] active:scale-95"
+              >
+                <ArrowRight className="h-5 w-5" />
+              </button>
+            </div>
           </div>
         </div>
       </section>

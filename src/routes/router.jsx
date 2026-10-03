@@ -18,6 +18,8 @@ import FindServicePage from "../pages/FindServicePage.jsx";
 import FindJobsPage from "../pages/FindJobsPage.jsx";
 import NotFoundPage from "../pages/NotFoundPage.jsx";
 import SectionPage from "../pages/SectionPage.jsx";
+import AboutPage from "../pages/AboutPage.jsx";
+import HowItWorksPage from "../pages/HowItWorksPage.jsx";
 import AuthPage from "../pages/AuthPage.jsx";
 import ProtectedRoute from "./ProtectedRoute.jsx";
 import AccountActionPage from "../pages/AccountActionPage.jsx";
@@ -62,21 +64,11 @@ const router = createBrowserRouter([
       },
       {
         path: "how-it-works",
-        element: (
-          <SectionPage
-            titleKey="howItWorks.pageTitle"
-            descKey="howItWorks.pageDescription"
-          />
-        ),
+        element: <HowItWorksPage />,
       },
       {
         path: "about",
-        element: (
-          <SectionPage
-            titleKey="about.pageTitle"
-            descKey="about.pageDescription"
-          />
-        ),
+        element: <AboutPage />,
       },
       {
         path: "faq",
