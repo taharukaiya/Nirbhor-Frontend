@@ -17,7 +17,7 @@ function AuthLayout() {
   return (
     <div className="relative min-h-screen w-full bg-slate-50 lg:grid lg:grid-cols-[1.05fr_1fr]">
       {/* ── Brand panel ── */}
-      <aside className="relative isolate hidden overflow-hidden bg-[#011F50] text-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:justify-between lg:p-14">
+      <aside className="relative isolate hidden overflow-hidden bg-[#011F50] text-white lg:block">
         <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
           <div
             className="absolute -left-[20%] -top-[10%] h-[34rem] w-[34rem] animate-pulse rounded-full bg-gradient-to-br from-[#0066FF]/40 to-purple-600/30 blur-[100px]"
@@ -40,6 +40,7 @@ function AuthLayout() {
           />
         </div>
 
+        <div className="flex min-h-screen flex-col justify-between gap-10 p-14 lg:sticky lg:top-0">
         <Link to="/" className="flex w-fit items-center gap-3">
           <img src={logo2} alt="Nirbhor" className="h-11 w-auto drop-shadow-lg" />
           <span className="text-xl font-extrabold tracking-tight">Nirbhor</span>
@@ -73,6 +74,7 @@ function AuthLayout() {
         <p className="text-sm font-medium text-white/50">
           © {new Date().getFullYear()} Nirbhor. All rights reserved.
         </p>
+        </div>
       </aside>
 
       {/* ── Form area ── */}
